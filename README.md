@@ -227,7 +227,3 @@ let state = { items: [], links: [], linkCats: [], teachers: [], ... };
 [MIT](LICENSE) © 2026
 
 用、改、卖都行，只要在副本里保留这份版权声明。
-
----
-
-<sub>仓库名用了中文，URL 会编码成 `%E6%8F%90...` 这种形式。如果 clone 命令在终端里显示乱码，用浏览器打开仓库页面复制 HTTPS 链接即可。</sub>
