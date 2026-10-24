@@ -1,0 +1,37 @@
+# ---------- 运行时与构建产物 ----------
+node_modules/
+dist/
+build/
+out/
+
+# ---------- 临时 / 缓存 ----------
+*.log
+*.tmp
+*.bak
+*.bak-*
+*.pyc
+__pycache__/
+_chk.js
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 打包产物 ----------
+*.zip
+*.7z
+*.rar
+免安装版/
+_app/
+
+# ---------- 编辑器 / IDE ----------
+.vscode/
+.idea/
+*.swp
+
+# ---------- 用户数据（防止误提交自己的库） ----------
+# NW.js userDataPath 若误放进仓库，里面有全部提示词和老师信息
+userData/
+Local Storage/
+IndexedDB/
+pvCache*
+*.sqlite

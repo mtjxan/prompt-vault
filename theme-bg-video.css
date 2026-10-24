@@ -1,0 +1,237 @@
+/* ============================================================
+   theme-bg-video.css — 《提示词宝库》视频背景主题
+   作用：开启「视频背景」开关后，界面切换为深色毛玻璃风格，
+        视频铺满全屏并在半透明面板后隐约可见。
+   用法：由 app30.html / app31.html … 通过 <link> 引入。
+   注意：所有规则都以 body.bg-video 开头，关闭开关时零影响。
+   ============================================================ */
+
+/* ---------- 1. 背景层 ---------- */
+/* ⚠️ 深色兜底底（2026-10-17）：视频文件缺失或还没解码出第一帧时，
+   这里没有底色就会漏出窗口白底，而 bg-video 把 --ink 设成近白 → 白字压白底。
+   视频正常播放时画面完全盖住它，看不见；缺失时它是最后一道可读性保险。 */
+#bgLayer{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;display:none;background:#080b16}
+#bgLayer.on{display:block}
+#bgVideo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(1.04);
+  min-width:100%;min-height:100%;width:auto;height:auto;object-fit:cover;
+  filter:saturate(1.05) brightness(.92) contrast(1.03)}
+#bgScrim{position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(8,11,22,.58) 0%,rgba(8,11,22,.34) 40%,rgba(8,11,22,.60) 100%),
+    radial-gradient(130% 100% at 50% 0%,rgba(10,14,28,.0) 0%,rgba(6,9,18,.46) 100%)}
+
+/* ---------- 2. 变量层：全部颜色 token 换成深色玻璃体系 ---------- */
+/* ⚠️ 用 html 前缀把优先级抬到 (0,1,2)：
+   theme-color.css 里的 body[data-theme="cream"] 同为 (0,1,1) 且加载更晚，
+   不加前缀的话这里整套深色变量会被它全部覆盖（实测踩过）。 */
+html body.bg-video{
+  /* ⚠️ --bg 不能设成 transparent！
+     它不只给 body 用，还被 13 处当「交互底」用：
+       .nav-item:hover / .cat-row:hover / .listen:hover 的悬停高亮
+       .nav-item .badge / #navWallpaper .badge.off 的徽标底
+       .detail .tags .tag / .tag-chip / .tag-suggest .sg / .mode-seg 的胶囊底
+     设成 transparent 后这些地方全部"底没了"，文字直接压在视频画面上 → 看不清。
+     body 自身的透明由下面那句 background:transparent 单独负责。 */
+  --bg:rgba(255,255,255,.085);         /* ← 修复：原来是 transparent */
+  --bg-soft:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.10);
+  --ink:#f3f6ff;                       /* ← 提亮（原 #eef2ff） */
+  --muted:#bcc7dc;                     /* ← 提亮（原 #9fabc9，压在亮画面会糊） */
+  --line:rgba(255,255,255,.17);
+  --primary:#a8d4ff;
+  --primary-soft:#cbe2ff;
+  --primary-bg:rgba(158,203,255,.20);
+  --gold:#eacd84;
+  --gold-soft:rgba(232,199,120,.42);
+  /* 金色徽标上的文字色：同壁纸主题，半透明金叠深底 → 必须用浅金字 */
+  --gold-ink:#f5e6c2;
+  --red:#ffa79e;
+  --green:#8ee7c8;
+  /* ⚠️ 这四个必须显式覆盖，它们不在 :root 的深色兜底里。
+     --surface 缺了 → 顶部按钮/弹窗/输入框白得刺眼（已踩坑）；
+     --on-primary 缺了 → 浅蓝底上的白字看不见。 */
+  --surface:rgba(255,255,255,.10);              /* 按钮、搜索框、tab 的半透明底 */
+  --surface-solid:rgba(24,30,46,.95);           /* 弹窗、输入框、toast 的实心底 */
+  --on-primary:#0d1524;                         /* 主色按钮上的深色字 */
+  --on-green:#08281c;                           /* 同理：--green 是浅绿 #8ee7c8，绿色按钮上要用深字 */
+  --media-empty:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.022));
+  --shadow:0 4px 20px rgba(0,0,0,.30);
+  --shadow-lg:0 16px 44px rgba(0,0,0,.46);
+  background:transparent;
+}
+body.bg-video .app{position:relative;z-index:1;background:transparent}
+
+/* ---------- 3. 主容器：半透明玻璃，让视频透出来 ---------- */
+/* 关键：面板只做「轻微压暗」，视频必须明显可见。
+   叠层顺序 = 视频 → bgScrim(压暗) → 面板(轻玻璃) → 卡片(更轻玻璃)
+   所以面板透明度取 .30 左右，靠 backdrop-filter 提供玻璃质感而非靠实色遮挡。 */
+body.bg-video .sidebar,
+body.bg-video .center,
+body.bg-video .detail,
+body.bg-video .topbar{
+  background:rgba(10,14,26,.42);
+  backdrop-filter:blur(4px) saturate(1.15);
+  -webkit-backdrop-filter:blur(4px) saturate(1.15);
+  border-color:rgba(255,255,255,.14);
+}
+body.bg-video .sidebar{border-right-color:rgba(255,255,255,.14);box-shadow:none}
+/* 详情区：右侧往往是空态，大面积无内容，必须比中栏再压暗一点，
+   否则视频里的亮部（本片右侧是白色人物）会直接顶到脸上、文字读不清 */
+body.bg-video .detail{
+  border-left-color:rgba(255,255,255,.14);
+  box-shadow:none;
+  background:rgba(8,11,22,.60)}
+body.bg-video .topbar{border-bottom-color:rgba(255,255,255,.13)}
+body.bg-video .sb-head,
+body.bg-video .sb-foot{border-color:rgba(255,255,255,.13)}
+/* 侧栏底部小字（数据仅存本机）在深底上要提亮 */
+body.bg-video .sb-foot{color:#8e9ab8}
+body.bg-video .sb-foot *{color:#8e9ab8}
+
+/* ---------- 4. 卡片 / 列表：玻璃片 ---------- */
+body.bg-video .card,
+body.bg-video .link-card,
+body.bg-video .step-row,
+body.bg-video .step-item,
+body.bg-video .dropzone{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.18);
+  backdrop-filter:blur(14px) saturate(1.2);
+  -webkit-backdrop-filter:blur(14px) saturate(1.2);
+  box-shadow:0 6px 24px rgba(0,0,0,.30);
+}
+/* 卡片缩略图区：原来是硬编码浅灰渐变（#f3f4f6→#e5e7eb），深色主题下必须换掉 */
+body.bg-video .card .media{
+  background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.02));
+  border-bottom:1px solid rgba(255,255,255,.09);
+}
+body.bg-video .card .media .empty-hint,
+body.bg-video .card .media span,
+body.bg-video .card .media div{color:rgba(170,183,208,.70)}
+/* 卡片缩略图上的圆形小按钮：亮底深字，保证可见 */
+body.bg-video .card .star,
+body.bg-video .card .edit,
+body.bg-video .card .del{background:rgba(255,255,255,.90);color:#243044}
+body.bg-video .card .del:hover{background:#ffe8e6;color:#c0392b}
+body.bg-video .card:hover,
+body.bg-video .link-card:hover{
+  background:rgba(255,255,255,.16);
+  border-color:rgba(158,203,255,.48);
+}
+/* 空状态（未选中提示、无数据提示）—— 别用实色 */
+body.bg-video .empty-state{color:#9fabc9}
+body.bg-video .card .tag,
+body.bg-video .detail .tags .tag,
+body.bg-video .tag-chip,
+body.bg-video .tag-suggest .sg{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.18);
+  color:#c8d4ee;
+}
+body.bg-video .detail .head .cat,
+body.bg-video .link-cat,
+body.bg-video .group-title .gcnt,
+body.bg-video .link-ico{
+  background:rgba(158,203,255,.20);
+  color:#cfe4ff;
+  border-color:rgba(158,203,255,.30);
+}
+body.bg-video .link-ico .ico-fav{background:rgba(255,255,255,.94)}
+body.bg-video .lf-chip{background:rgba(20,25,42,.62);border-color:rgba(255,255,255,.16);color:var(--ink)}
+body.bg-video .mode-seg{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15)}
+
+/* ---------- 5. 详情区内容块 / 表单 ---------- */
+body.bg-video .detail .content,
+body.bg-video .detail .steps-body,
+body.bg-video .detail .steps-tabs .tab,
+body.bg-video .detail .foot .btn{
+  background:rgba(255,255,255,.075);
+  border-color:rgba(255,255,255,.16);
+  color:var(--ink);
+}
+body.bg-video input,
+body.bg-video textarea,
+body.bg-video select,
+body.bg-video .search input{
+  background:rgba(255,255,255,.09);
+  color:var(--ink);
+  border-color:rgba(255,255,255,.18);
+}
+body.bg-video input::placeholder,
+body.bg-video textarea::placeholder{color:rgba(159,171,201,.85)}
+body.bg-video .search input:focus{background:rgba(255,255,255,.14);border-color:var(--primary)}
+body.bg-video .topbar .btn,
+body.bg-video .step-row .step-ops button,
+body.bg-video .modal .foot .btn,
+body.bg-video #capture,
+body.bg-video #capture button{
+  background:rgba(255,255,255,.10);
+  color:var(--ink);
+  border-color:rgba(255,255,255,.18);
+}
+body.bg-video .topbar .btn:hover,
+body.bg-video .step-row .step-ops button:hover{background:rgba(255,255,255,.18)}
+
+/* .topbar 之外的 .btn（如 .links-head 里的「＋添加网址 / ⚡自动分配」）
+   此前没有任何规则命中，会露出浏览器默认灰白底 —— 深色下极刺眼 */
+body.bg-video .btn{
+  background:rgba(255,255,255,.10);
+  color:var(--ink);
+  border-color:rgba(255,255,255,.18);
+}
+body.bg-video .btn:hover{background:rgba(255,255,255,.18)}
+body.bg-video .btn.primary{
+  background:var(--primary);color:var(--on-primary);border-color:var(--primary);
+}
+body.bg-video .btn.primary:hover{background:var(--primary);filter:brightness(1.06)}
+
+/* ---------- 6. 侧栏交互态 ---------- */
+body.bg-video .nav-item,
+body.bg-video .cat-row{color:#dfe6f7}
+body.bg-video .nav-item:hover,
+body.bg-video .cat-row:hover,
+body.bg-video .listen:hover,
+body.bg-video .detail .head button:hover{background:rgba(255,255,255,.10);color:#fff}
+body.bg-video .nav-item.active,
+body.bg-video .cat-row.active{
+  background:rgba(158,203,255,.20);
+  color:#dcecff;
+  box-shadow:inset 0 0 0 1px rgba(158,203,255,.32)}
+body.bg-video .nav-item .badge{background:rgba(255,255,255,.13);color:#c3cee6}
+
+/* ---------- 7. 弹窗与遮罩 ---------- */
+body.bg-video .overlay{background:rgba(5,8,16,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+body.bg-video .modal{
+  background:rgba(18,23,40,.90);
+  border-color:rgba(255,255,255,.14);
+  backdrop-filter:blur(26px) saturate(1.25);
+  -webkit-backdrop-filter:blur(26px) saturate(1.25)}
+body.bg-video .modal .foot .btn:hover{background:rgba(255,255,255,.18)}
+body.bg-video .field input,
+body.bg-video .field textarea,
+body.bg-video .field select{background:rgba(255,255,255,.09)}
+body.bg-video .dropzone.dragover{background:rgba(158,203,255,.20);border-color:var(--primary)}
+
+/* 8. 滚动条
+   ------------------------------------------------------------
+   2026-10-16：原来这里的两条 body.bg-video ::-webkit-scrollbar-thumb
+   规则（rgba(255,255,255,.20)）已删除 —— 特异性高于全局规则会盖掉它，
+   且 20% 白拇指在透明轨道上几乎看不见。
+   现统一由 app36.html 的「细滚动条（全局）」接管。 */
+
+/* ---------- 9. 入场动效 ---------- */
+@keyframes bgFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+body.bg-video .app > *{animation:bgFadeUp .55s cubic-bezier(.22,.9,.3,1) both}
+body.bg-video .app > *:nth-child(2){animation-delay:.07s}
+body.bg-video .app > *:nth-child(3){animation-delay:.14s}
+
+/* ---------- 10. 设置页开关（两种主题下都要好看，所以不加 body.bg-video 前缀）---------- */
+.switch{position:relative;display:inline-flex;align-items:center;cursor:pointer;user-select:none}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch .track{width:46px;height:26px;border-radius:13px;background:rgba(140,140,140,.45);
+  transition:.22s;position:relative;flex:none}
+.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;
+  border-radius:50%;background:#fff;transition:.22s;box-shadow:0 1px 4px rgba(0,0,0,.28)}
+.switch input:checked + .track{background:linear-gradient(135deg,#3d7fb8,#5aa9e6)}
+.switch input:checked + .track::after{transform:translateX(20px)}
+.switch input:focus-visible + .track{outline:2px solid var(--primary);outline-offset:2px}

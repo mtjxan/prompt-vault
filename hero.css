@@ -1,0 +1,290 @@
+/* ============================================================
+   hero.css — 《提示词宝库》首屏封面页（参考 motionsites open-agent）
+   设计要点：
+   · 单屏铺满、无滚动，视频即主角（只轻压暗，不做毛玻璃盒子）
+   · 巨大的左对齐白色标题 + 副文案 + 白底黑字按钮
+   · 顶部极简导航；底部一行"指标"
+   · 进入方式：点按钮 / 滚轮 / 方向键 → 淡出到三栏管理界面
+   ============================================================ */
+
+/* ---------- 首屏容器 ---------- */
+#hero{
+  position:fixed;inset:0;z-index:9000;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  /* ⚠️ 这一层是「永不黑屏」的兜底保险：静态首帧图直接做 hero 的背景。
+     即使 <video> 在某些机器上彻底画不出来，首屏也一定显示这张定妆照。
+     视频一旦真正解码并开始播放，再用 JS 加 .vid-live 把视频淡入盖上去。 */
+  background:#070a12 url("hero-poster.jpg") center center / cover no-repeat;
+  transition:opacity .62s cubic-bezier(.4,0,.2,1), transform .62s cubic-bezier(.4,0,.2,1);
+}
+#hero.gone{opacity:0;transform:scale(1.035);pointer-events:none}
+
+/* ---------- 视频就绪判定（黑屏兜底的核心机制） ---------- */
+/* 默认：视频透明不可见，用户看到的是上面的静态首帧图 */
+#heroVideo{opacity:0}
+/* 只有当 JS 确认「至少画出了 2 帧真实画面」后才加 .vid-live → 视频淡入 */
+#hero.vid-live #heroVideo{opacity:1;transition:opacity .85s ease}
+/* 确认视频画不出来的情况（超时 / 解码失败 / 像素全黑）→ 维持静态图，并提示一次 */
+#hero.vid-dead #heroVideo{display:none}
+
+/* ---------- 视频与遮罩 ---------- */
+#heroVideo{
+  /* ⚠️ 核显/NW.js 黑屏排查要点（实测结论，改前务必先读）：
+     · 视频元素上叠 filter / backdrop-filter / translateZ / 复杂 transform
+       → 在集成显卡 + 软件合成路径下会导致 video 纹理合成失败，画面纯黑，
+         但 readyState / playing / videoWidth 一切正常（解码没问题，只是画不出来）。
+     · 因此这里刻意退化为「最朴素形态」：只做绝对定位居中 + object-fit:cover，
+       完全不使用 transform / filter / transition。取景靠 ffmpeg 预处理视频本体解决，
+       不在 CSS 层二次搬动像素。这是兼容性最高的写法，不要再加回 transform。 */
+  position:absolute;top:0;left:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+  z-index:1;
+  background:#070a12;
+}
+/* 视差强度由 JS 写入 --px / --py，跟随鼠标轻微反向移动，营造景深 */
+/* 遮罩：左侧加重（文字区）+ 顶部底部压暗，中间保持通透 —— 参考页的核心手法
+   因为去掉视频上的 filter（防核显黑屏），原来靠 filter 压的亮度改由这里补偿，
+   所以色值比初版略重一点。--sx 由 JS 写入，做「高光位置随鼠标微移」的呼吸感。 */
+#heroScrim{
+  position:absolute;inset:0;z-index:2;   /* 压在视频(z-index:1)之上，内容层(z-index:3)之下 */
+  --sx:50%;
+  background:
+    linear-gradient(100deg,rgba(6,10,20,.88) 0%,rgba(6,10,20,.66) 30%,rgba(6,10,20,.16) 58%,rgba(6,10,20,.34) 100%),
+    linear-gradient(180deg,rgba(6,10,20,.58) 0%,rgba(6,10,20,0) 24%,rgba(6,10,20,0) 60%,rgba(6,10,20,.68) 100%),
+    radial-gradient(58% 46% at var(--sx) 44%,rgba(120,170,255,.10) 0%,rgba(0,0,0,0) 100%);
+  transition:background-position .6s ease;
+}
+
+/* ---------- 内容层 ---------- */
+#heroInner{
+  position:relative;z-index:3;
+  flex:1;display:flex;flex-direction:column;
+  padding:0 clamp(28px,5.2vw,86px);
+}
+
+/* 顶部导航 */
+#heroNav{
+  display:flex;align-items:center;gap:clamp(18px,2.4vw,38px);
+  padding:clamp(22px,3vw,36px) 0;
+  animation:heroRise .9s cubic-bezier(.22,.9,.3,1) .1s both;
+}
+#heroBrand{display:flex;align-items:center;gap:11px;margin-right:clamp(6px,1.4vw,22px)}
+#heroBrand .mark{
+  width:34px;height:34px;flex:none;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,#ffffff 0%,#dfe7f5 58%,#aec2de 100%);
+  box-shadow:0 0 0 1px rgba(255,255,255,.30), 0 6px 20px rgba(0,0,0,.34);
+}
+#heroBrand .wordmark{
+  font-size:15px;font-weight:700;letter-spacing:.02em;color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);white-space:nowrap;
+}
+#heroNav .navlink{
+  font-size:13.5px;font-weight:500;color:rgba(255,255,255,.80);
+  cursor:pointer;transition:.18s;position:relative;text-shadow:0 1px 8px rgba(0,0,0,.44);
+  white-space:nowrap;
+}
+#heroNav .navlink:hover{color:#fff}
+#heroNav .navlink::after{
+  content:"";position:absolute;left:0;right:100%;bottom:-5px;height:1.5px;
+  background:#fff;transition:right .24s cubic-bezier(.4,0,.2,1);
+}
+#heroNav .navlink:hover::after{right:0}
+#heroNav .spacer{flex:1}
+
+/* 顶部右侧按钮：白底黑字 */
+#heroNav .btn-white{
+  padding:10px 19px;border-radius:7px;border:none;
+  background:#fff;color:#1a1f2e;font-size:13.5px;font-weight:650;
+  cursor:pointer;transition:.18s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 3px 16px rgba(0,0,0,.28);font-family:inherit;white-space:nowrap;
+}
+#heroNav .btn-white:hover{transform:translateY(-1.5px);box-shadow:0 8px 26px rgba(0,0,0,.38)}
+
+/* 主体：左对齐巨型标题 */
+#heroBody{
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  max-width:min(760px,58vw);
+  padding-bottom:clamp(10px,3vh,44px);
+}
+#heroEyebrow{
+  display:inline-flex;align-items:center;gap:8px;align-self:flex-start;
+  padding:6px 13px;border-radius:999px;margin-bottom:clamp(16px,2.4vh,26px);
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);
+  /* 注意：这里刻意不用 backdrop-filter —— 它会在视频之上再起一个模糊合成层，
+     在集成显卡上是黑屏/掉帧的高危项。改用略高的纯色透明度模拟同样观感。 */
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.94);letter-spacing:.03em;
+  animation:heroRise .9s cubic-bezier(.22,.9,.3,1) .2s both;
+}
+#heroEyebrow .dot{
+  width:6px;height:6px;border-radius:50%;background:#7ff0b8;
+  box-shadow:0 0 9px #7ff0b8;animation:pulseDot 2.1s ease-in-out infinite;
+}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+#heroTitle{
+  font-size:clamp(38px,5.3vw,74px);
+  font-weight:750;line-height:1.045;letter-spacing:-.026em;
+  color:#fff;margin:0 0 clamp(16px,2.4vh,26px);
+  text-shadow:0 3px 30px rgba(0,0,0,.46), 0 1px 3px rgba(0,0,0,.32);
+  animation:heroRise 1s cubic-bezier(.22,.9,.3,1) .28s both;
+}
+#heroTitle .accent{
+  background:linear-gradient(96deg,#ffffff 12%,#c8dcff 58%,#9fc4ff 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+#heroSub{
+  font-size:clamp(13.5px,1.24vw,17px);line-height:1.62;
+  color:rgba(255,255,255,.86);max-width:min(520px,44vw);
+  margin:0 0 clamp(22px,3.4vh,34px);
+  text-shadow:0 2px 14px rgba(0,0,0,.52);
+  animation:heroRise .9s cubic-bezier(.22,.9,.3,1) .38s both;
+}
+
+#heroCtas{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  animation:heroRise .9s cubic-bezier(.22,.9,.3,1) .48s both}
+#heroEnter{
+  padding:14px 27px;border-radius:8px;border:none;
+  background:#fff;color:#1a1f2e;
+  font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:.2s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 5px 26px rgba(0,0,0,.34);
+  display:inline-flex;align-items:center;gap:9px;
+}
+#heroEnter:hover{transform:translateY(-2px);box-shadow:0 11px 36px rgba(0,0,0,.44)}
+#heroEnter .arrow{transition:transform .22s cubic-bezier(.4,0,.2,1);font-size:15px;line-height:1}
+#heroEnter:hover .arrow{transform:translateX(4px)}
+
+#heroGhost{
+  padding:14px 22px;border-radius:8px;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);
+  /* 同样去掉 backdrop-filter，理由见 #heroEyebrow 注释 */
+  color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:.2s cubic-bezier(.4,0,.2,1);
+}
+#heroGhost:hover{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.50)}
+
+#heroMicro{
+  margin-top:clamp(15px,2.2vh,22px);
+  font-size:12.5px;color:rgba(255,255,255,.68);
+  text-shadow:0 1px 10px rgba(0,0,0,.5);letter-spacing:.01em;
+  animation:heroRise .9s cubic-bezier(.22,.9,.3,1) .58s both;
+}
+
+/* 底部：统计条 */
+#heroFoot{
+  display:flex;align-items:center;gap:clamp(20px,3.6vw,52px);
+  padding:clamp(18px,2.6vw,30px) 0 clamp(22px,3vw,34px);
+  border-top:1px solid rgba(255,255,255,.16);
+  animation:heroRise .9s cubic-bezier(.22,.9,.3,1) .68s both;
+  flex-wrap:wrap;
+}
+#heroFoot .metric{display:flex;flex-direction:column;gap:3px}
+#heroFoot .metric .num{
+  font-size:clamp(19px,2.1vw,27px);font-weight:750;color:#fff;line-height:1;
+  letter-spacing:-.02em;text-shadow:0 2px 14px rgba(0,0,0,.44);
+}
+#heroFoot .metric .lbl{
+  font-size:11.5px;color:rgba(255,255,255,.66);letter-spacing:.045em;
+  text-transform:uppercase;font-weight:600;
+}
+#heroFoot .spacer{flex:1}
+#heroHint{
+  display:flex;align-items:center;gap:8px;
+  font-size:12.5px;color:rgba(255,255,255,.62);
+}
+#heroHint .chev{animation:bobDown 1.9s ease-in-out infinite;font-size:14px}
+@keyframes bobDown{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(4px);opacity:1}}
+
+@keyframes heroRise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ---------- 进入管理界面的过渡 ---------- */
+.app{transition:opacity .5s ease, transform .62s cubic-bezier(.4,0,.2,1)}
+body.hero-active{overflow:hidden}
+
+/* ⚠️ 2026-10-13 修复：首屏期间 .app 整层 disable 会连带废掉分隔线
+   ------------------------------------------------------------------
+   用户反馈「窗口自由缩放到一定范围就拉不动」。实测根因在这条：
+   body.hero-active 时 .app 被设成 pointer-events:none，而 .splitter 是 .app 的子元素，
+   于是一起失去鼠标事件（实测 getComputedStyle 得到 pointerEvents = "none"），
+   拖拽完全不响应 —— 且此时鼠标看起来一切正常，极易误判成"拖拽功能坏了"。
+
+   触发窗口比想象中宽：hero 的淡出过渡有 0.62s，这期间 body.hero-active 还在；
+   程序化调用 heroEnter()（比如从代码里跳转）后若没清理，更会长期残留。
+
+   修法（不再用整层 disable 这种粗粒度手段）：
+   · 首屏要挡的是「用户看到封面时误点到下面的管理界面」——
+     这件事由 #hero 自己这个 fixed 全屏层天然完成，不需要再禁 .app；
+   · 所以直接删掉 .app 的 pointer-events:none，
+     只靠 #hero 覆盖即可。hero 一旦 .gone 就 pointer-events:none 并退出层级。
+   · 这样分隔线在任何时刻都能拖，不存在"残留期"。 */
+#hero.gone{z-index:-1}                             /* 淡出后彻底退出层级，不参与命中测试 */
+
+/* ---------- 窄屏适配 ---------- */
+@media (max-width:900px){
+  #heroBody{max-width:100%}
+  #heroSub{max-width:100%}
+  #heroNav .navlink{display:none}
+  #heroFoot .metric:nth-child(n+4){display:none}
+}
+
+/* ---------- 窗口拉伸自适应（新增，与 theme-responsive.css 配套） ---------- */
+/* 封面本身是全屏 fixed 层，高度跟着视口走没问题；要防的是内部内容溢出：
+   标题用 vw 字级、底部统计条横向排布，窗口收窄时最容易把内容顶出屏幕。 */
+
+/* 全局兜底：hero 各层允许收缩，禁止把内部宽度撑破 */
+#hero,#heroInner,#heroNav,#heroBody,#heroFoot{max-width:100%}
+#heroNav{flex-wrap:wrap;row-gap:6px}
+#heroFoot{min-width:0}
+
+/* ≤1260px：略收左右留白，标题字号跟着降一档 */
+@media (max-width:1260px){
+  #heroInner{padding:0 clamp(20px,4.2vw,56px)}
+  #heroTitle{font-size:clamp(34px,5vw,60px)}
+  #heroFoot{gap:clamp(14px,2.6vw,34px)}
+}
+
+/* ≤1040px：副标题与标题都收窄上限，统计条允许换行 */
+@media (max-width:1040px){
+  #heroBody{max-width:100%}
+  #heroTitle{font-size:clamp(30px,5.4vw,50px)}
+  #heroSub{max-width:min(100%,520px)}
+  #heroFoot{flex-wrap:wrap;row-gap:12px}
+  #heroFoot .spacer{display:none}
+  /* 空间不够时优先砍统计数字，保住主标题和按钮（信息优先级） */
+  #heroFoot .metric:nth-child(n+4){display:none}
+}
+
+/* ≤820px：导航链接收成纯图标区，统计条只留 2 项，按钮换行 */
+@media (max-width:820px){
+  #heroInner{padding:0 clamp(16px,3.6vw,32px)}
+  #heroNav{gap:14px;padding:clamp(16px,2.4vw,26px) 0}
+  #heroNav .navlink{display:none}
+  #heroBrand .wordmark{font-size:14px}
+  #heroTitle{font-size:clamp(26px,6.4vw,40px);letter-spacing:-.02em}
+  #heroSub{font-size:13px}
+  #heroCtas{gap:10px}
+  #heroEnter,#heroGhost{padding:12px 18px;font-size:13.5px}
+  #heroFoot{gap:16px;padding:16px 0 20px}
+  #heroFoot .metric:nth-child(n+3){display:none}
+  #heroHint{display:none}
+}
+
+/* ≤640px：极限窄窗口，只保标题 + 主按钮 */
+@media (max-width:640px){
+  #heroNav{padding:14px 0}
+  #heroBrand .wordmark{display:none}
+  #heroTitle{font-size:clamp(22px,7vw,32px)}
+  #heroSub{display:none}
+  #heroFoot .metric:nth-child(n+2){display:none}
+  #heroEnter{padding:11px 16px;font-size:13px}
+}
+
+/* 高度不够时（横向窗口/小屏）继续压缩 */
+@media (max-height:620px){
+  #heroFoot{display:none}
+  #heroTitle{font-size:clamp(30px,4.4vw,48px)}
+}

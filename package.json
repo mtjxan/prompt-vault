@@ -1,0 +1,28 @@
+{
+  "name": "prompt-vault",
+  "main": "app36.html",
+  "version": "1.0.0",
+  "description": "提示词宝库 · 本地桌面软件",
+  "chromium-args": "--autoplay-policy=no-user-gesture-required --ignore-gpu-blocklist --enable-gpu-rasterization --enable-zero-copy --gpu-rasterization-msaa-sample-count=0 --enable-native-gpu-memory-buffers --disable-features=CalculateNativeWinOcclusion --disable-backgrounding-occluded-windows --disable-renderer-backgrounding",
+  "window": {
+    "title": "提示词宝库",
+    "icon": "gem.ico",
+    "width": 1280,
+    "height": 800,
+    "min_width": 420,
+    "min_height": 360,
+    "window_state": "maximized",
+    "resizable": true,
+    "fullscreen": false,
+    "show": true,
+    "kiosk": false,
+    "always_on_top": false,
+    "position": "center",
+    "toolbar": false,
+    "frame": true
+  },
+  "webkit": {
+    "plugin": false,
+    "double_buffering": true
+  }
+}

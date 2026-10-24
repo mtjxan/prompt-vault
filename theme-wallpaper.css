@@ -1,0 +1,351 @@
+/* ============================================================
+   theme-wallpaper.css — 《提示词宝库》管理界面「静态壁纸 + 可自定义」主题
+   ------------------------------------------------------------------
+   设计目标：
+     · 管理界面不再是原来的浅米色，改成「深色底 + 半透明磨砂面板」，
+       壁纸在面板后隐约可见，卡片像悬在壁纸上的玻璃片。
+     · 壁纸可换：6 张内置深色壁纸 + 纯色/渐变 + 用户自己上传的图。
+     · 面板透明度可调（设置里 0~100% 滑块）。
+   零副作用原则：
+     · 所有视觉规则都挂在 body.wp-on 下 —— 关掉开关时，原米白主题完全不受影响。
+     · 变量覆盖 + 硬编码补丁两层（原 app 有 43 处硬编码浅色背景，变量够不到全部）。
+   ============================================================ */
+
+/* ============================================================
+   一、背景层
+   ============================================================ */
+#wpLayer{
+  position:fixed;inset:0;z-index:0;overflow:hidden;
+  pointer-events:none;              /* 必须：否则背景吃掉全部点击，应用直接废掉 */
+  display:none;
+  /* ⚠️ 深色兜底底（2026-10-17 踩坑）：壁纸是 background-image，
+     文件缺失时浏览器「静默失败」，这里不铺底色的话 body 又是 transparent，
+     就会漏出窗口白底；而 wp-on 把 --ink 设成近白 #f3f6ff →
+     整站白字压白底，文字全部消失（用户实测截图即此故障）。
+     图片正常加载时会被完全覆盖，看不见这层；图片丢失时它保证文字仍可读。 */
+  background:#0b1220;
+}
+body.wp-on #wpLayer{display:block}
+
+/* 壁纸本体：用 background-image 而非 <img>，这样同时支持内置/上传/纯色/渐变四种来源 */
+#wpImage{
+  position:absolute;inset:0;
+  background-position:center center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  transition:opacity .5s ease;      /* 换壁纸时淡入淡出，不闪现 */
+}
+/* 压暗/调色层：强度由 --wp-dim 控制。
+   ⚠️ 实测教训：最初取 .30，结果「壁纸本来就深 + 压暗层 + 半透明深色面板」三层叠完
+   基本等于纯黑，壁纸完全看不见。现在默认降到 .12，只做「轻微压边」，
+   靠面板自身的 --wp-panel 提供对比度，让壁纸真正透出来。 */
+#wpScrim{
+  position:absolute;inset:0;
+  --wp-dim:.10;
+  background:
+    /* 上下轻微压暗，让顶部导航/底部不糊 */
+    linear-gradient(180deg,
+      rgba(6,9,18,calc(var(--wp-dim) * 1.5)) 0%,
+      rgba(6,9,18,0) 26%,
+      rgba(6,9,18,0) 62%,
+      rgba(6,9,18,calc(var(--wp-dim) * 1.6)) 100%),
+    /* 四角压暗（暗角），中间完全通透 —— 这是让壁纸「看得见」的关键 */
+    radial-gradient(120% 92% at 50% 46%,
+      rgba(6,9,18,0) 42%, rgba(6,9,18,calc(var(--wp-dim) * 1.8)) 100%);
+}
+
+/* ============================================================
+   二、变量层：整套颜色 token 换为深色玻璃体系
+   ============================================================ */
+/* ⚠️ 同 bg-video：用 html 前缀抬优先级，避免被 theme-color.css 的
+   body[data-theme="..."] 覆盖（两者同为 (0,1,1)，而它加载更晚）。 */
+html body.wp-on{
+  /* ⚠️ --bg 不能设成 transparent！
+     它不只给 body 用，还被 13 处当「交互底」用：
+       .nav-item:hover / .cat-row:hover / .listen:hover 的悬停高亮
+       .nav-item .badge / #navWallpaper .badge.off 的徽标底
+       .detail .tags .tag / .tag-chip / .tag-suggest .sg / .mode-seg 的胶囊底
+     设成 transparent 后这些地方全部"底没了"，文字直接压在壁纸上 → 看不清。
+     body 自身的透明由下面那句 background:transparent!important 单独负责。 */
+  --bg:rgba(255,255,255,.085);         /* ← 修复：原来是 transparent */
+  --bg-soft:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.10);
+  --ink:#f3f6ff;                       /* ← 提亮（原 #eef2ff） */
+  --muted:#bcc7dc;                     /* ← 提亮（原 #9fabc9，在亮壁纸上会糊） */
+  --line:rgba(255,255,255,.17);
+  --primary:#a8d4ff;
+  --primary-soft:#cbe2ff;
+  --primary-bg:rgba(158,203,255,.20);
+  --gold:#eacd84;
+  --gold-soft:rgba(232,199,120,.42);
+  /* 金色徽标上的文字色：壁纸主题下徽标底是「半透明金叠深玻璃」，
+     整体偏暗，所以字必须用浅金，深棕字会看不见（实测过）。 */
+  --gold-ink:#f5e6c2;
+  --red:#ffa79e;
+  --green:#8ee7c8;
+  /* ⚠️ 这三个必须显式覆盖！默认值是 #fff（浅色主题的白底控件），
+     不在深色下覆盖的话，顶部按钮 / 弹窗 / 输入框会白得刺眼（已踩坑）。 */
+  --surface:rgba(255,255,255,.10);              /* 按钮、搜索框、tab 的半透明底 */
+  --surface-solid:rgba(24,30,46,.95);           /* 弹窗、输入框、toast 的实心底 */
+  --on-primary:#0d1524;                         /* 主色按钮上的深色字（--primary 是浅蓝，白字会看不见） */
+  --on-green:#08281c;                           /* 同理：--green 是浅绿 #8ee7c8，绿色按钮上要用深字 */
+  --media-empty:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.022));
+  --shadow:0 4px 20px rgba(0,0,0,.30);
+  --shadow-lg:0 16px 44px rgba(0,0,0,.46);
+  /* 面板透明度由设置页滑块写入 --wp-panel（0~1）
+     默认 .40：壁纸仍然透得出来，同时文字对比度够用。
+     设太高（.6+）壁纸基本看不见，太低（.2-）壁纸亮部会顶到脸上、文字糊。 */
+  --wp-panel:.40;                      /* ← 从 .28 提到 .40，解决"字体太透明" */
+  background:transparent!important;    /* body 自身透明，壁纸才透得出来 */
+}
+body.wp-on .app{position:relative;z-index:1;background:transparent}
+
+/* ============================================================
+   三、主容器：半透明玻璃，壁纸透出来
+   ============================================================
+   叠层顺序 = 壁纸 → wpScrim(轻微压边) → 面板(半透明) → 卡片(更轻的玻璃)
+   要点：
+     · blur 只给 7px —— 大 blur（14px+）会把壁纸的明暗走势整个抹平，
+       看起来就成了一张「均匀的深灰底」，用户根本认不出这是张图。
+     · 不透明度取 --wp-panel（默认 .30），靠它提供对比度，不靠实色遮挡。
+   ============================================================ */
+body.wp-on .sidebar,
+body.wp-on .center,
+body.wp-on .detail,
+body.wp-on .topbar{
+  background:rgba(10,14,26,var(--wp-panel));
+  backdrop-filter:blur(7px) saturate(1.18);
+  -webkit-backdrop-filter:blur(7px) saturate(1.18);
+  border-color:rgba(255,255,255,.13);
+}
+body.wp-on .sidebar{border-right-color:rgba(255,255,255,.13);box-shadow:none}
+/* 详情区右侧常是空态、大片无内容，需比中栏再压暗一点，
+   否则壁纸亮部会直接顶到脸上、文字读不清 */
+body.wp-on .detail{
+  background:rgba(8,11,22,calc(var(--wp-panel) * 1.24));
+  border-left-color:rgba(255,255,255,.13);
+  box-shadow:none;
+}
+body.wp-on .topbar{border-bottom-color:rgba(255,255,255,.12)}
+body.wp-on .sb-head,
+body.wp-on .sb-foot{border-color:rgba(255,255,255,.13)}
+/* 侧栏底部小字（数据仅存本机）在深底上要提亮 */
+body.wp-on .sb-foot,
+body.wp-on .sb-foot *{color:#8e9ab8}
+
+/* ============================================================
+   四、卡片 / 列表：玻璃片
+   ============================================================
+   ⚠️ 实测教训：卡片如果给到 .10 的白 + 中栏 .30 的深底，两层叠起来
+   整片区域就接近实色，壁纸只能在卡片缝隙里露一点点，等于白做。
+   所以卡片取「更低的白 + 更小的 blur」：
+     · 白 .055 —— 够出玻璃感和边界，又不吃掉底下的壁纸
+     · blur 9px   —— 比面板小，避免二次模糊把壁纸抹平
+   这样一屏看过去，壁纸的明暗走势能贯穿整个中栏。
+   ============================================================ */
+body.wp-on .card,
+body.wp-on .link-card,
+body.wp-on .step-row,
+body.wp-on .step-item,
+body.wp-on .dropzone{
+  background:rgba(255,255,255,.055);
+  border-color:rgba(255,255,255,.15);
+  backdrop-filter:blur(9px) saturate(1.15);
+  -webkit-backdrop-filter:blur(9px) saturate(1.15);
+  box-shadow:0 4px 18px rgba(0,0,0,.24);
+}
+/* 卡片缩略图区：原来是硬编码浅灰渐变（#f3f4f6→#e5e7eb），深色主题必须换掉。
+   这里刻意做成「几乎透明」—— 缩略图占卡片 2/3 面积，是壁纸能不能透出来的关键位。 */
+body.wp-on .card .media{
+  background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  border-bottom:1px solid rgba(255,255,255,.075);
+}
+body.wp-on .card .media .empty-hint,
+body.wp-on .card .media span,
+body.wp-on .card .media div{color:rgba(170,183,208,.70)}
+/* 卡片缩略图上的圆形小按钮：亮底深字，保证在深玻璃上可见 */
+body.wp-on .card .star,
+body.wp-on .card .edit,
+body.wp-on .card .del{background:rgba(255,255,255,.90);color:#243044}
+body.wp-on .card .del:hover{background:#ffe8e6;color:#c0392b}
+body.wp-on .card:hover,
+body.wp-on .link-card:hover{
+  background:rgba(255,255,255,.16);
+  border-color:rgba(158,203,255,.48);
+}
+body.wp-on .empty-state{color:#9fabc9}
+body.wp-on .card .tag,
+body.wp-on .detail .tags .tag,
+body.wp-on .tag-chip,
+body.wp-on .tag-suggest .sg{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.18);
+  color:#c8d4ee;
+}
+body.wp-on .detail .head .cat,
+body.wp-on .link-cat,
+body.wp-on .group-title .gcnt,
+body.wp-on .link-ico{
+  background:rgba(158,203,255,.20);
+  color:#cfe4ff;
+  border-color:rgba(158,203,255,.30);
+}
+body.wp-on .link-ico .ico-fav{background:rgba(255,255,255,.94)}
+body.wp-on .lf-chip{background:rgba(20,25,42,.62);border-color:rgba(255,255,255,.16);color:var(--ink)}
+body.wp-on .mode-seg{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15)}
+
+/* ============================================================
+   五、详情区内容块 / 表单 / 弹窗
+   ============================================================ */
+body.wp-on .detail .content,
+body.wp-on .detail .steps-body,
+body.wp-on .detail .steps-tabs .tab,
+body.wp-on .detail .foot .btn{
+  background:rgba(255,255,255,.075);
+  border-color:rgba(255,255,255,.16);
+  color:var(--ink);
+}
+body.wp-on input,
+body.wp-on textarea,
+body.wp-on select,
+body.wp-on .search input{
+  background:rgba(255,255,255,.09);
+  color:var(--ink);
+  border-color:rgba(255,255,255,.18);
+}
+body.wp-on input::placeholder,
+body.wp-on textarea::placeholder{color:rgba(159,171,201,.85)}
+body.wp-on .search input:focus{background:rgba(255,255,255,.14);border-color:var(--primary)}
+body.wp-on .topbar .btn,
+body.wp-on .step-row .step-ops button,
+body.wp-on .modal .foot .btn,
+body.wp-on #capture,
+body.wp-on #capture button{
+  background:rgba(255,255,255,.10);
+  color:var(--ink);
+  border-color:rgba(255,255,255,.18);
+}
+body.wp-on .topbar .btn:hover,
+body.wp-on .step-row .step-ops button:hover{background:rgba(255,255,255,.18)}
+
+/* ============================================================
+   六、侧栏交互态
+   ============================================================ */
+body.wp-on .nav-item,
+body.wp-on .cat-row{color:#dfe6f7}
+body.wp-on .nav-item:hover,
+body.wp-on .cat-row:hover,
+body.wp-on .listen:hover,
+body.wp-on .detail .head button:hover{background:rgba(255,255,255,.10);color:#fff}
+body.wp-on .nav-item.active,
+body.wp-on .cat-row.active{
+  background:rgba(158,203,255,.20);
+  color:#dcecff;
+  box-shadow:inset 0 0 0 1px rgba(158,203,255,.32)}
+body.wp-on .nav-item .badge{background:rgba(255,255,255,.13);color:#c3cee6}
+
+/* ============================================================
+   七、弹窗与遮罩
+   ============================================================ */
+body.wp-on .overlay{background:rgba(5,8,16,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+body.wp-on .modal{
+  background:rgba(18,23,40,.90);
+  border-color:rgba(255,255,255,.14);
+  backdrop-filter:blur(26px) saturate(1.25);
+  -webkit-backdrop-filter:blur(26px) saturate(1.25)}
+body.wp-on .modal .foot .btn:hover{background:rgba(255,255,255,.18)}
+body.wp-on .field input,
+body.wp-on .field textarea,
+body.wp-on .field select{background:rgba(255,255,255,.09)}
+body.wp-on .dropzone.dragover{background:rgba(158,203,255,.20);border-color:var(--primary)}
+
+/* ============================================================
+   八、滚动条
+   ------------------------------------------------------------
+   2026-10-16：原来这里有 body.wp-on ::-webkit-scrollbar-thumb
+   {background:rgba(255,255,255,.20)} 两条规则。它特异性比全局的
+   ::-webkit-scrollbar-thumb 高，会盖掉新写的细滚动条规则；
+   而且 20% 白的拇指在透明轨道上几乎看不见。
+   现已**全部集中到 app36.html 的「细滚动条（全局）」一段**：
+   宽度 10px、轨道透明、拇指 var(--muted)、两端箭头按钮隐藏。
+   ============================================================ */
+
+/* ============================================================
+   九、入场动效
+   ============================================================ */
+@keyframes wpFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+body.wp-on .app > *{animation:wpFadeUp .55s cubic-bezier(.22,.9,.3,1) both}
+body.wp-on .app > *:nth-child(2){animation-delay:.07s}
+body.wp-on .app > *:nth-child(3){animation-delay:.14s}
+
+/* ============================================================
+   十、设置页：壁纸选择器 + 透明度滑块
+   （这些控件在两种主题下都要好看，所以不加 body.wp-on 前缀）
+   ============================================================ */
+/* 注意：这两个 setting-row 在 flex 横向布局里，必须让内容占满整行，
+   否则 #wpPicker 会被压成窄条，auto-fill 只能算出 1 列（实测踩过）。 */
+#wpPickerRow{flex-wrap:wrap}
+#wpPickerRow .info{flex:0 0 100%}
+#wpPicker{flex:0 0 100%;width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;margin-top:4px}
+
+.wp-thumb{
+  position:relative;aspect-ratio:16/10;border-radius:9px;overflow:hidden;
+  border:2px solid transparent;cursor:pointer;
+  background-size:cover;background-position:center;
+  transition:transform .18s cubic-bezier(.4,0,.2,1),border-color .18s,box-shadow .18s;
+  box-shadow:0 2px 10px rgba(0,0,0,.16);
+}
+.wp-thumb:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.28)}
+.wp-thumb.sel{border-color:var(--primary);box-shadow:0 0 0 3px rgba(31,78,107,.18),0 8px 20px rgba(0,0,0,.24)}
+.wp-thumb .wp-tick{
+  position:absolute;right:6px;top:6px;width:18px;height:18px;border-radius:50%;
+  /* ⚠️ 2026-10-16 配色体检：同 theme-color.css 的 .th-tick。
+     原来 color:#fff，但这里 --primary 恒为浅蓝(#a8d4ff)，白字对比度仅 1.31。
+     改用 --on-primary（壁纸/视频主题里定义为 #0d1524 深色）。 */
+  background:var(--primary);color:var(--on-primary);font-size:11px;line-height:18px;text-align:center;
+  opacity:0;transform:scale(.6);transition:.18s;font-weight:700;
+}
+.wp-thumb.sel .wp-tick{opacity:1;transform:scale(1)}
+.wp-thumb .wp-name{
+  position:absolute;left:0;right:0;bottom:0;padding:4px 6px;
+  font-size:10.5px;font-weight:600;color:#fff;text-align:center;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* 纯色 / 渐变的缩略图用 CSS 背景画，不需要图片文件 */
+.wp-thumb.wp-solid{background-image:none!important}
+
+/* 上传按钮做成「虚线占位格」，和缩略图同尺寸，视觉整齐 */
+.wp-upload{
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;
+  aspect-ratio:16/10;border-radius:9px;cursor:pointer;
+  border:2px dashed rgba(140,140,140,.45);
+  background:rgba(140,140,140,.07);
+  font-size:10.5px;font-weight:600;color:var(--muted);
+  transition:.18s;
+}
+.wp-upload:hover{border-color:var(--primary);color:var(--primary);background:rgba(31,78,107,.07)}
+.wp-upload .plus{font-size:19px;line-height:1;font-weight:400}
+
+/* 透明度滑块 */
+#wpOpacityRow{display:flex;align-items:center;gap:11px;width:100%;margin-top:2px}
+/* 滑块那一行的 .info 要占满整行，否则被 flex 压窄（新面板里没有 wp-block 类） */
+#wpMain .setting-row{flex-wrap:wrap}
+#wpMain .setting-row .info{flex:1 1 100%}
+#wpOpacity{
+  -webkit-appearance:none;appearance:none;flex:1;height:5px;border-radius:3px;
+  background:rgba(140,140,140,.34);outline:none;cursor:pointer;
+}
+#wpOpacity::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--primary,#1f4e6b);cursor:pointer;
+  box-shadow:0 1px 5px rgba(0,0,0,.30);
+}
+#wpOpacityVal{
+  font-size:12px;font-weight:700;color:var(--muted);min-width:38px;text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+/* 设置行里的壁纸区块要比普通行高一些 */
+.setting-row.wp-block{display:block}
+.setting-row.wp-block .info{margin-bottom:11px}

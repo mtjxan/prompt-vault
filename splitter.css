@@ -1,0 +1,258 @@
+/* ==========================================================================
+   splitter.css —— 分隔线拖拽（像 VS Code 那样手动拖宽窄）
+   --------------------------------------------------------------------------
+   两个手柄插在三栏之间：
+     sidebar │ #spLeft │ center │ #spRight │ detail
+
+   核心思路：
+     新增 --sb-user / --dt-user 两个变量存放「用户拖出来的宽度」，
+     再用 var(--sb-user, var(--sidebar-w)) 让用户值优先、断点值兜底。
+     → 拖过就记住用户值；没拖过就跟随响应式断点，互不打架。
+
+   加载顺序：... theme-color → theme-responsive → splitter（最后）
+   ========================================================================== */
+
+/* ---------- 1. 让用户宽度接管三栏 ---------- */
+/* 机制：JS 把算好的宽度写进 :root 的 --sb-user / --dt-user，
+   这里用 var(--sb-user, var(--sidebar-w)) 让用户值优先、断点值兜底。
+   → 拖过就记住用户值；没拖过就跟随响应式断点，互不打架。
+
+   ⚠️⚠️ 2026-10-13 重要修正：**去掉了 min(...,48vw) / min(...,52vw)**
+   ------------------------------------------------------------------
+   用户反馈「还是一样，这样就是极限距离，不能再往右边拉了」，截图显示
+   详情栏已经占满屏幕。实测根因是这里的 vw 夹取：
+
+     用户把详情栏往左拖 → JS 算出 --dt-user = 838px 写进 :root
+       → 但这条 CSS 又夹一次 min(838px, 52vw)
+       → 1280 窗口下 52vw = 665.6px  ← 界面实际只有 666px
+       → 用户继续拖，鼠标在动但界面纹丝不动 = "拖不动了"
+
+   实测差值（52vw 白白吃掉的宽度）：
+       窗口 1280 → JS 允许 838，CSS 只给 666，**吃掉 172px**
+       窗口 1440 → JS 允许 900，CSS 只给 749，**吃掉 151px**
+       窗口 1180 → JS 允许 738，CSS 只给 614，**吃掉 124px**
+
+   **这层夹取是重复设限**：防"把中间栏挤没"这件事，
+   JS 的 spMax() 已经用 SP_GUTTER（中间栏保底）+ 两侧预算算过了，
+   轮不到 CSS 再插一手。而且 CSS 这层是"静默"的 ——
+   JS 以为写进去 838 成功了，用户看到的是 666，两边认知不一致，
+   于是表现为"拖到一半突然卡住"，比一开始就不让拖更难理解。
+
+   去掉后：宽度完全由 JS 单一来源决定，拖到哪就是哪，手感连续。
+   ------------------------------------------------------------------
+   （下方 ≤940px 的抽屉规则保留 —— 那个区间是另一套布局，与此无关） */
+.sidebar{width:var(--sb-user, var(--sidebar-w))}
+.detail{width:var(--dt-user, var(--detail-w))}
+
+/* ---------- 1.5 侧栏抽屉（☰）—— 基础态 ----------
+   ⚠️ 2026-10-17 补回：这套规则之前在 10-13 的重构里被整段删掉了，
+      只剩 JS 里的 sbToggle/sbClose 和 HTML 里的 ☰ 按钮、#sbmask 空 div。
+      结果：☰ 在宽窗口也显示（该隐藏没隐藏），点它只给 body 加个 .sb-open，
+      但没有任何 CSS 认这个 class → **按钮点了完全没反应**（已实测：侧栏 x 不动、
+      遮罩宽 0px、透明）。现在把样式补齐，让它真正能用。 */
+
+/* 抽屉遮罩：宽窗口下完全不出现 */
+.sbmask{
+  display:none;position:fixed;inset:0;z-index:55;
+  background:rgba(8,11,20,.45);
+  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .24s ease;
+  /* ⚠️ 必须掐掉背景主题的入场动画：theme-wallpaper / theme-bg-video 里
+     body.wp-on|.bg-video .app > *{animation:...both}，而 .sbmask 也是 .app 的直接子元素。
+     fill-mode:both 的 to{opacity:1} 优先级高于普通声明 → 遮罩会「常亮」永远盖在界面上。 */
+  animation:none!important;
+}
+body.sb-open .sbmask{opacity:1;pointer-events:auto}
+
+/* 汉堡按钮：默认不显示，只有窗口窄到抽屉模式才出现 */
+#btnNavToggle{
+  display:none;align-items:center;justify-content:center;
+  width:38px;height:38px;padding:0;font-size:16px;line-height:1;
+  flex:0 0 auto;margin-right:10px;
+}
+
+/* ≤940px：侧栏变抽屉（用"点 ☰ 临时看导航"），但**手柄不再隐藏** ——
+   用户主动拖宽时由 JS 把 .sidebar 的 position 切回 static（见 spCollapse 的 wide 态），
+   所以这里只处理"未拖动时"的默认抽屉外观。 */
+@media (max-width:940px){
+  :root{--detail-w:300px;--sidebar-w:232px}
+
+  #btnNavToggle{display:inline-flex}   /* ☰：抽屉模式下用它临时调出侧栏 */
+  .sbmask{display:block}
+
+  /* 侧栏脱离文档流 → 覆盖式抽屉，不再占用中间栏宽度 */
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;z-index:60;
+    width:min(232px,76vw);
+    transform:translateX(-103%);
+    /* 把布局/绘制影响隔离在自身，避免开合时中间的网格与卡片跟着重排 */
+    contain:layout paint style;
+    box-shadow:var(--shadow-lg);
+  }
+  /* 过渡「按需生效」：默认没有过渡（跨断点时不跑动画，避免"卡住→猛跳"），
+     只有真正点开合时 JS 才给 body 挂 .sb-anim。 */
+  body.sb-anim .sidebar{transition:transform .26s cubic-bezier(.22,.8,.3,1)}
+  body.sb-open .sidebar{transform:translateX(0)}
+  /* 用户拖宽后不再是抽屉，也就不需要遮罩（见上方 body.sp-sb-wide 规则） */
+  body.sp-sb-wide .sidebar{transform:none!important;contain:none}
+
+  /* ⚠️ 关键修复（踩过）：两个背景主题都给 .app > * 挂了入场动画
+       @keyframes wpFadeUp{ from{transform:translateY(12px)} to{transform:none} }
+       body.wp-on .app > *{animation:wpFadeUp .55s ... both}
+     关键字 both —— 动画结束后 to 里的 transform:none 会永久生效，
+     而「动画里的 transform」在层叠里优先级高于普通声明，于是抽屉写的
+     translateX(-103%) 被顶掉，侧栏会自己滑出来盖住 ☰ 按钮（点不动）。
+     所以抽屉模式下必须把这条动画摘掉。 */
+  body.wp-on .app > .sidebar,
+  body.bg-video .app > .sidebar{animation:none}
+
+  .detail{width:var(--dt-user, 300px)}   /* 详情栏仍接受用户拖拽值 */
+}
+/* 抽屉态被用户拖宽时（JS 挂 .sp-wide）：交回常规文档流 */
+body.sp-sb-wide .sidebar{
+  position:relative!important;transform:none!important;
+  width:var(--sb-user,232px)!important;
+  z-index:auto!important;
+}
+body.sp-sb-wide .sbmask{display:none!important}
+
+/* ---------- 2. 手柄本体 ---------- */
+.splitter{
+  flex:0 0 6px;                 /* 固定 6px 占位，不被压扁 */
+  align-self:stretch;
+  position:relative;
+  z-index:30;
+  cursor:col-resize;
+  background:transparent;       /* 平时不可见，只有悬停/拖动才显形 */
+  transition:background .16s ease;
+  /* 关键：让 6px 窄条也能有足够大的舒适命中区（触屏/手抖都友好） */
+  touch-action:none;
+  -webkit-user-select:none;user-select:none;
+}
+
+/* 视觉细线：靠伪元素画 1px，避免整条 6px 都是实色显得笨重 */
+.splitter::before{
+  content:"";
+  position:absolute;left:50%;top:0;bottom:0;
+  width:2px;margin-left:-1px;
+  background:var(--primary);
+  opacity:0;
+  transform:scaleY(.35);
+  transition:opacity .16s ease, transform .18s cubic-bezier(.3,.8,.3,1);
+  border-radius:2px;
+}
+
+/* 悬停：显出细线 */
+.splitter:hover::before{opacity:.55;transform:scaleY(1)}
+
+/* 拖动中：加亮加粗 */
+.splitter.sp-active::before{opacity:1;transform:scaleY(1);width:3px;margin-left:-1.5px}
+
+/* 空间不足（撞墙）：变色提示"不是没拖到，是没地方了"
+   场景：拖右边变宽 → 左边被挤到最小值；或中间栏已到保底宽度。
+   用暖橙色 + 轻微脉冲，与其他状态的蓝色区分开。 */
+.splitter.sp-blocked::before{
+  background:#ff9a4d;
+  width:3px;margin-left:-1.5px;
+  opacity:1;transform:scaleY(1);
+  animation:spBlocked .55s ease-in-out infinite alternate;
+}
+@keyframes spBlocked{
+  from{opacity:.75}
+  to  {opacity:1;box-shadow:0 0 10px rgba(255,154,77,.9)}
+}
+/* 空间不足时光标也给个提示 */
+body.sp-dragging .splitter.sp-blocked{cursor:not-allowed}
+body.sp-dragging .splitter.sp-blocked ~ *{cursor:not-allowed}
+
+/* 聚焦（键盘操作）：同样显形，保证可发现性 */
+.splitter:focus{outline:none}
+.splitter:focus-visible::before{opacity:.9;transform:scaleY(1)}
+
+/* 双击恢复默认时的反馈：一道快速白光扫过 */
+.splitter.sp-flash::before{
+  opacity:1;transform:scaleY(1);
+  background:var(--primary);
+  animation:spFlash .26s ease-out;
+}
+@keyframes spFlash{
+  0%  {opacity:1;transform:scaleY(1) translateY(0)}
+  50% {opacity:1;transform:scaleY(1) translateY(0);box-shadow:0 0 12px var(--primary)}
+  100%{opacity:.55;transform:scaleY(1)}
+}
+
+/* ---------- 3. 拖动中的全局状态 ---------- */
+/* 拖拽时：全窗口保持 col-resize 光标，并禁止选中文字、禁掉过渡动画防卡顿 */
+body.sp-dragging{cursor:col-resize}
+body.sp-dragging *{
+  cursor:col-resize !important;
+  -webkit-user-select:none !important;user-select:none !important;
+}
+/* 拖动中三栏不要有 transition，否则手感"拖泥带水" */
+body.sp-dragging .sidebar,
+body.sp-dragging .center,
+body.sp-dragging .detail{
+  transition:none !important;
+}
+/* 拖动中避免壁纸层重绘导致掉帧 */
+body.sp-dragging #wpImage{will-change:auto}
+
+/* ---------- 4. 折叠态（取代原来的"窄窗口直接隐藏手柄"） ---------- */
+/* ⚠️⚠️ 2026-10-13 三轮重做（用户：「还是不行，我要的是可以拖动，
+   如果到极限的话就采取折叠压缩方式缩小和扩大窗口」）
+   ------------------------------------------------------------------
+   用户反馈的核心诉求：**分隔线任何时候都要能拖**，拖到空间不够时
+   不要"撞墙不动"，而应该**自动折叠收起那一栏**，把空间让出来。
+
+   原来的做法是硬性隐藏：
+     @media (max-width:940px){ #spLeft{display:none} }
+     @media (max-width:720px){ #spRight{display:none} }
+   结果：窄窗口下用户找不到手柄 → "还是不行"。
+
+   新做法分两种折叠态，由 JS 挂 class 控制（见 app36.html 的 spCollapse）：
+     · .sp-collapsed   —— 用户主动拖到最窄，或空间不足时自动收起
+       表现为：该栏宽度收到 0（配合 overflow:hidden），手柄仍留在原位
+       且方向反转（再往回拖就能展开）
+     · 手柄永远 display:flex，不再用断点隐藏
+   ------------------------------------------------------------------ */
+
+/* 折叠态：栏位收成 0，内容隐藏但节点保留（不清 DOM，避免状态丢失） */
+.sidebar.sp-collapsed,
+.detail.sp-collapsed{
+  width:0!important;min-width:0!important;
+  padding:0!important;border:none!important;
+  overflow:hidden;
+}
+/* 折叠后手柄变成一个"展开热区"：贴在窗口边缘，鼠标靠近即显形
+   （由 .sp-edge 实现，见下） */
+
+/* 折叠态下的手柄提示条：加宽命中区并常显淡色，让用户知道"这里能拉出来" */
+.splitter.sp-edge{
+  flex:0 0 10px;                 /* 比平时的 6px 略宽，更容易抓到 */
+  cursor:col-resize;
+}
+.splitter.sp-edge::before{
+  opacity:.30;
+  transform:scaleY(1);
+  width:2px;
+  background:var(--primary);
+}
+.splitter.sp-edge:hover::before{opacity:.9;width:3px;margin-left:-1.5px}
+
+/* 拖动中三栏不要有 transition，否则手感"拖泥带水" */
+
+/* ---------- 5. 与主题/背景协调 ---------- */
+/* 视频背景、壁纸模式下背景是半透的，手柄细线用更亮的颜色才看得见 */
+body.bg-video .splitter::before,
+body.wp-on .splitter::before{
+  background:var(--primary);
+  box-shadow:0 0 6px rgba(0,0,0,.28);
+}
+/* 暗色主题下提亮，避免细线淹没在深背景里 */
+body[data-theme="dark"] .splitter::before{background:#7aa7ff}
+
+/* ---------- 6. 手柄分隔线不要视觉上加粗三栏边界 ---------- */
+/* 原三栏各自有 border-left/right，手柄插进去后可能出现"双线"；
+   这里把紧邻手柄的那侧边框去掉，视觉上只留一条线 */
+.splitter + .center{border-left:none}
+.splitter + .detail{border-left:none}
