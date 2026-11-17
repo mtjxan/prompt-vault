@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>快速取用</title>
+<style>
+/* 悬浮窗：独立小窗，样式自成一套，不依赖 app36.html 的 CSS */
+:root{
+  --bg:#1c1f2a;--bg2:#252938;--ink:#e8eaf2;--muted:#8b93a7;
+  --line:rgba(255,255,255,.10);--acc:#5b9dff;--acc-bg:rgba(91,157,255,.16);
+  --ok:#3ddc97;--warn:#ffb648;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  font-size:13px;display:flex;flex-direction:column;
+  border-radius:12px;border:1px solid var(--line);
+  -webkit-app-region:no-drag;
+}
+/* 标题栏可拖动 */
+.bar{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;
+  background:var(--bg2);border-bottom:1px solid var(--line);
+  -webkit-app-region:drag;flex:none;
+}
+.bar .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.bar .tt{font-size:12.5px;font-weight:600;letter-spacing:.3px}
+.bar .kbd{
+  margin-left:auto;font-size:10.5px;color:var(--muted);
+  border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+  font-family:Consolas,monospace;
+}
+.bar .x{
+  -webkit-app-region:no-drag;cursor:pointer;border:0;background:none;
+  color:var(--muted);font-size:16px;line-height:1;padding:2px 5px;border-radius:5px;
+}
+.bar .x:hover{background:rgba(255,255,255,.09);color:var(--ink)}
+
+.search{padding:10px 12px;flex:none}
+.search input{
+  width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:9px;
+  padding:9px 12px;font-size:13px;color:var(--ink);outline:none;
+}
+.search input:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-bg)}
+.search input::placeholder{color:var(--muted)}
+
+.list{flex:1;overflow:auto;padding:0 8px 8px}
+.item{
+  padding:9px 11px;border-radius:9px;cursor:pointer;margin-bottom:3px;
+  border:1px solid transparent;
+}
+.item:hover,.item.sel{background:var(--acc-bg);border-color:rgba(91,157,255,.35)}
+.item .t{font-size:12.5px;font-weight:600;margin-bottom:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .s{font-size:11px;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .c{font-size:10px;color:var(--acc);margin-left:6px;font-weight:400}
+
+.empty{padding:34px 16px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
+.foot{
+  padding:8px 12px;border-top:1px solid var(--line);background:var(--bg2);
+  font-size:11px;color:var(--muted);display:flex;gap:10px;flex:none;
+}
+.foot span b{color:var(--ink);font-weight:600}
+.preview{
+  flex:none;max-height:120px;overflow:auto;padding:9px 12px;
+  border-top:1px solid var(--line);background:rgba(0,0,0,.18);
+  font-size:11.5px;line-height:1.65;color:var(--muted);
+  white-space:pre-wrap;word-break:break-word;font-family:Consolas,monospace;
+}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.24)}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="dot"></span>
+    <span class="tt">快速取用</span>
+    <span class="kbd" id="hotkeyTip">Ctrl+Shift+P</span>
+    <button class="x" id="btnClose" title="关闭（Esc）">×</button>
+  </div>
+
+  <div class="search">
+    <input id="q" type="text" placeholder="搜索提示词…（↑↓ 选择，回车复制）" autofocus>
+  </div>
+
+  <div class="list" id="list"></div>
+  <div class="preview" id="preview" style="display:none"></div>
+
+  <div class="foot">
+    <span><b>↑↓</b> 选择</span>
+    <span><b>Enter</b> 复制</span>
+    <span><b>Esc</b> 关闭</span>
+    <span style="margin-left:auto"><b id="cnt">0</b> 条</span>
+  </div>
+
+<script>
+"use strict";
+/* ============================================================
+ * 提示词宝库 · 悬浮窗快速取用
+ * 数据来源：主窗口通过 postMessage 推送（pv-data），
+ * 本窗口收到后本地缓存到 localStorage，下次打开秒出。
+ * 复制：写入剪贴板后通知主窗口弹提示。
+ * ============================================================ */
+
+let DATA = { items: [], categories: [] };
+let filtered = [];
+let selIdx = 0;
+let win = null;
+
+try { win = require("nw.gui").Window.get(); } catch (e) {}
+
+/* ---------- 与主窗口通信 ---------- */
+function sendToMain(msg) {
+  try {
+    // 找到主窗口并把消息扔过去
+    const all = win ? win.window : null;
+    if (opener && !opener.closed && opener.PV) {
+      opener.PV.onQuickMessage(msg);
+      return;
+    }
+  } catch (e) {}
+  try {
+    if (win) win.window.postMessage(msg, "*");
+  } catch (e) {}
+}
+
+function receive(ev) {
+  const m = ev.data;
+  if (!m || m.type !== "pv-data" || !m.data) return;
+  DATA = m.data;
+  try { localStorage.setItem("pvQuickCache", JSON.stringify(DATA)); } catch (e) {}
+  render();
+}
+
+window.addEventListener("message", receive);
+
+// 启动时先用上次缓存，立刻有内容可看
+(function bootFromCache() {
+  try {
+    const raw = localStorage.getItem("pvQuickCache");
+    if (raw) { DATA = JSON.parse(raw) || DATA; }
+  } catch (e) {}
+  render();
+  // 主动向主窗口要一份最新的
+  setTimeout(() => {
+    try { sendToMain({ type: "pv-request-data" }); } catch (e) {}
+  }, 120);
+})();
+
+/* ---------- 渲染 ---------- */
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// 一条提示词在悬浮窗里显示的正文：优先单条内容，否则拼分步
+function bodyOf(it) {
+  if (it.content) return it.content;
+  const steps = it.steps || [];
+  if (!steps.length) return "";
+  return steps.map((s, i) => (s.title ? "[" + s.title + "]\n" : "") + (s.content || "")).join("\n\n");
+}
+
+function applyFilter() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  if (!q) { filtered = DATA.items.slice(); }
+  else {
+    filtered = DATA.items.filter(it => {
+      const hay = [it.title, it.category, (it.tags || []).join(" "), bodyOf(it)]
+        .join(" ").toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+  }
+  // 收藏的排前面
+  filtered.sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+  if (selIdx >= filtered.length) selIdx = 0;
+}
+
+function render() {
+  applyFilter();
+  const box = document.getElementById("list");
+  document.getElementById("cnt").textContent = filtered.length;
+  if (!DATA.items.length) {
+    box.innerHTML = '<div class="empty">还没有收到数据。<br>请确保主窗口「提示词宝库」正在运行，<br>它会自动把提示词同步过来。</div>';
+    return;
+  }
+  if (!filtered.length) {
+    box.innerHTML = '<div class="empty">没有匹配「' + esc(document.getElementById("q").value) + '」的提示词</div>';
+    return;
+  }
+  box.innerHTML = filtered.map((it, i) => {
+    const head = bodyOf(it).replace(/\s+/g, " ").slice(0, 80);
+    return '<div class="item' + (i === selIdx ? " sel" : "") + '" data-i="' + i + '">' +
+      '<div class="t">' + esc(it.title || "(无标题)") +
+        (it.favorite ? ' <span style="color:#ffb648">★</span>' : "") +
+        (it.category ? '<span class="c">' + esc(it.category) + "</span>" : "") + "</div>" +
+      '<div class="s">' + esc(head || "（无内容）") + "</div>" +
+      "</div>";
+  }).join("");
+  showPreview();
+}
+
+function showPreview() {
+  const box = document.getElementById("preview");
+  const it = filtered[selIdx];
+  if (!it) { box.style.display = "none"; return; }
+  box.style.display = "block";
+  box.textContent = bodyOf(it).slice(0, 1200);
+}
+
+function moveSel(d) {
+  if (!filtered.length) return;
+  selIdx = (selIdx + d + filtered.length) % filtered.length;
+  render();
+  const el = document.querySelector('.item[data-i="' + selIdx + '"]');
+  if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+}
+
+/* ---------- 复制 ---------- */
+async function copyCurrent() {
+  const it = filtered[selIdx];
+  if (!it) return;
+  // 带 {{变量}} 的条目，悬浮窗里不做填空（太小），提示去主窗口处理
+  const text = bodyOf(it);
+  if (/\{\{[^{}]+\}\}/.test(text)) {
+    sendToMain({ type: "pv-copied", title: it.title });
+    // 仍然先复制原文，用户可以在剪贴板里改
+    await writeClip(text);
+    flash("已复制（含变量，建议在主窗口填空）");
+    return;
+  }
+  await writeClip(text);
+  sendToMain({ type: "pv-copied", title: it.title });
+  flash("已复制：" + (it.title || ""));
+}
+
+async function writeClip(t) {
+  try { await navigator.clipboard.writeText(t); return; }
+  catch (e) {}
+  const ta = document.createElement("textarea");
+  ta.value = t;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); } catch (_) {}
+  document.body.removeChild(ta);
+}
+
+let flashTimer = null;
+function flash(msg) {
+  const box = document.getElementById("preview");
+  const old = box.textContent;
+  box.style.display = "block";
+  box.style.color = "#3ddc97";
+  box.textContent = "✔ " + msg;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => {
+    box.style.color = "";
+    showPreview();
+  }, 1100);
+}
+
+function closeWin() {
+  if (win) win.close();
+  else window.close();
+}
+
+/* ---------- 事件 ---------- */
+document.getElementById("q").addEventListener("input", () => { selIdx = 0; render(); });
+
+document.getElementById("list").addEventListener("click", e => {
+  const el = e.target.closest(".item");
+  if (!el) return;
+  selIdx = parseInt(el.dataset.i, 10) || 0;
+  render();
+  copyCurrent();
+});
+
+document.getElementById("btnClose").addEventListener("click", closeWin);
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { e.preventDefault(); closeWin(); return; }
+  if (e.key === "ArrowDown") { e.preventDefault(); moveSel(1); return; }
+  if (e.key === "ArrowUp") { e.preventDefault(); moveSel(-1); return; }
+  if (e.key === "Enter") { e.preventDefault(); copyCurrent(); return; }
+});
+
+// 显示实际热键（主窗口启动时可通过 URL 参数传入）
+try {
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("hk")) document.getElementById("hotkeyTip").textContent = qs.get("hk");
+} catch (e) {}
+</script>
+</body>
+</html>

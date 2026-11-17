@@ -117,6 +117,10 @@
   .card .media video{width:100%;height:100%;object-fit:cover}
   .card .media .empty{color:var(--muted);font-size:11px}
   .card .body{padding:13px 14px 14px;flex:1;display:flex;flex-direction:column}
+  /* 第35批：无图卡片没有媒体区，标题就是整张卡片的脸面 → 放大、顶到上部 */
+  .card.no-media .body{padding-top:46px}  /* 顶部留出悬浮按钮的空间 */
+  .card.no-media .body h3{font-size:24px;line-height:1.4;text-align:center;margin-top:10px}
+  .card.no-media .body .cat{font-size:12px}
   .card .cat{font-size:11px;color:var(--primary);font-weight:700;margin-bottom:6px}
   .card h3{font-size:15px;font-weight:700;line-height:1.35;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   .card .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto}
@@ -145,7 +149,13 @@
   .detail .head button{border:none;background:transparent;width:32px;height:32px;border-radius:8px;color:var(--muted);font-size:16px;display:grid;place-items:center}
   .detail .head button:hover{background:var(--bg);color:var(--ink)}
   .detail .head button.star.on{color:var(--gold)}
-  .detail .body{flex:1;overflow:auto;padding:18px}
+  /* 详情正文容器（2026-11-01 第三版）
+     之前是 overflow:hidden + flex:1 → 高度被锁死在可视区里，正文永远只分到一小块。
+     现在改成「高度由内容决定、自己不滚」：
+       无图 → 正文自然长，整个 #detailContent 一起滚（正文占满视野，不再被压成一条）
+       有图 → 预览区被钉在底下，#detailContent 上半部分滚，滚动照样能到头
+     滚动交给外层 #detailContent 统一处理，避免「框里框外都能滚」的套娃手感。 */
+  .body{flex:0 0 auto;overflow:visible;padding:18px;display:flex;flex-direction:column}
   .detail .body h2{font-size:18px;font-weight:800;margin-bottom:12px;line-height:1.35}
   .dropzone{border:2px dashed var(--line);border-radius:14px;padding:24px;text-align:center;color:var(--muted);background:var(--bg-soft);transition:.15s;margin-bottom:16px;position:relative}
   .dropzone.dragover{border-color:var(--primary);background:var(--primary-bg)}
@@ -419,13 +429,27 @@
     pointer-events:none; z-index:2;
   }
 
-  .detail .content{background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:14px 15px;white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.7;color:#374151;max-height:240px;overflow:auto;margin-bottom:14px}
+  .detail .content{
+    background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;
+    padding:14px 15px;white-space:pre-wrap;word-break:break-word;
+    font-size:13px;line-height:1.7;color:var(--ink);
+    /* 2026-11-01：原来写死 max-height:240px，跟窗口高度无关，
+       所以正文永远只显示一小块、下面大片空白。
+       现在去掉所有高度上限：有多少字就多高，由详情栏统一滚动。 */
+    flex:0 0 auto;overflow:visible;margin-bottom:14px;
+  }
   .detail .steps{margin-bottom:14px}
   .detail .steps-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
   .detail .steps-tabs .tab{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:6px 12px;border-radius:999px;cursor:pointer;transition:.15s}
   .detail .steps-tabs .tab:hover{border-color:var(--gold);color:var(--gold)}
   .detail .steps-tabs .tab.active{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
-  .detail .steps-body{background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:14px 15px;white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.7;color:#374151;max-height:200px;overflow:auto}
+  .detail .steps-body{
+    background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;
+    padding:14px 15px;white-space:pre-wrap;word-break:break-word;
+    font-size:13px;line-height:1.7;color:var(--ink);
+    /* 同 .content：分步正文也不再固定 200px，按内容自然高度 */
+    flex:0 0 auto;overflow:visible;
+  }
   .detail .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
   .detail .tags .tag{font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--line);padding:3px 9px;border-radius:999px}
   .detail .desc{font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;word-break:break-word}
@@ -448,7 +472,7 @@
   .modal .x-close:hover{background:var(--bg);color:var(--ink);border-color:var(--line)}
   .modal .x-close:active{transform:scale(.94)}
   .modal.has-x .foot{display:none}
-  .modal .body{padding:16px 20px;overflow:auto}
+  .modal .body{padding:16px 20px;overflow:auto;min-height:0;flex:1 1 auto}
   .field{margin-bottom:14px}
   .field label{display:block;font-size:11.5px;font-weight:800;color:var(--primary);margin-bottom:5px;letter-spacing:.4px}
   .field input,.field textarea,.field select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;outline:none;color:var(--ink);background:var(--surface-solid);font-family:inherit}
@@ -673,6 +697,428 @@
   /* ==================== 视频背景主题已外置 ==================== */
   /* 深色毛玻璃主题的全部样式（含设置页开关 .switch）见同目录 theme-bg-video.css，
      由下方 <link> 引入。这样调整主题不必再改这个 122KB 主文件，也避免正则误伤原有样式。 */
+
+  /* ===== 变量填空 / 版本历史 / PNG 提取（2026-10-27 新增） =====
+     全部走主题变量，浅色/暗黑/壁纸主题都会自动跟随，不硬编码任何颜色 */
+  .hint-block{background:var(--primary-bg);border:1px solid var(--line);border-radius:10px;
+    padding:9px 12px;font-size:12.5px;line-height:1.7;color:var(--muted);margin-bottom:12px}
+  .hint-block b{color:var(--primary);font-weight:700}
+  .hint-block code{background:var(--surface);border:1px solid var(--line);border-radius:4px;
+    padding:0 4px;font-family:Consolas,Monaco,monospace;font-size:11.5px}
+
+  /* 变量填空：每个变量一行，左边名字右边输入框 */
+  .var-row{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}
+  .var-row .var-name{font-size:12.5px;font-weight:600;color:var(--ink);display:flex;
+    align-items:center;gap:6px;flex-wrap:wrap}
+  .var-row .var-name code{background:var(--primary-bg);color:var(--primary);border-radius:5px;
+    padding:1px 6px;font-size:11.5px;font-family:Consolas,Monaco,monospace}
+  .var-row .var-tag{font-size:10.5px;color:var(--muted);font-weight:400}
+  .var-row input,.var-row textarea,.var-row select{width:100%;background:var(--surface);
+    border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13px;
+    color:var(--ink);font-family:inherit;outline:none}
+  .var-row input:focus,.var-row textarea:focus,.var-row select:focus{
+    border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-bg)}
+  .var-row textarea{min-height:62px;resize:vertical;line-height:1.6}
+
+  /* 预览区：等宽字体，方便看替换效果 */
+  .var-preview{background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;
+    padding:11px 13px;font-size:12.5px;line-height:1.75;color:var(--ink);white-space:pre-wrap;
+    word-break:break-word;max-height:210px;overflow:auto;font-family:Consolas,Monaco,monospace}
+
+  /* 版本历史列表 */
+  .ver-list{max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .ver-item{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;background:var(--surface);cursor:pointer;transition:.15s}
+  .ver-item:hover{border-color:var(--primary);background:var(--primary-bg)}
+  .ver-item.active{border-color:var(--primary);background:var(--primary-bg)}
+  .ver-when{font-size:12.5px;color:var(--ink);font-weight:600;flex:none}
+  .ver-meta{font-size:11.5px;color:var(--muted);flex:1;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .ver-item .btn{padding:5px 11px;font-size:12px}
+
+  /* PNG 拖放区 */
+  .png-drop{border:2px dashed var(--line);border-radius:14px;padding:26px 16px;text-align:center;
+    background:var(--bg-soft);transition:.15s;cursor:pointer}
+  .png-drop.dragover{border-color:var(--primary);background:var(--primary-bg)}
+  .png-drop-ico{font-size:30px;line-height:1;margin-bottom:8px}
+  .png-drop-t1{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:4px}
+  .png-drop-t2{font-size:11.5px;color:var(--muted);margin-bottom:12px}
+  .png-result{margin-top:12px;max-height:240px;overflow:auto}
+  .png-kv{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:12.5px;
+    line-height:1.65;color:var(--ink)}
+  .png-kv dt{color:var(--muted);font-weight:600}
+  .png-kv dd{word-break:break-word;font-family:Consolas,Monaco,monospace;font-size:12px}
+  .png-warn{background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.3);
+    color:var(--red);border-radius:9px;padding:9px 12px;font-size:12.5px;line-height:1.65}
+
+  /* 卡片上的变量数量徽标 */
+  /* ============================================================
+     详情栏布局：顶栏在顶、正文吃满中间、工具栏贴底
+     ------------------------------------------------------------
+     历史问题（2026-11-01 之前）：
+       正文写死 max-height:240px、分步写死 200px，跟窗口高度完全无关，
+       所以正文永远只显示一小块，下面空一大片。
+     第一版改法（只把正文改 flex）不够：
+       正文虽然能拉长了，但「标题/标签/说明」把空间抢走，正文实测只剩 301px；
+       内容一多还得在正文框里自己滚，形成「滚动套滚动」。
+     最终做法（本段）：
+       #detailContent 拆两层 ——
+         .dt-scroll（flex:1）是唯一滚动区，装顶栏 + 正文 + 上传条；
+         .dt-fixed（flex:0）装底部按钮，永远贴底。
+       正文不再设任何高度上限，有多少字就多高，统一由 .dt-scroll 滚。
+       于是：窗口多高，正文就占多高；内容超了往下滚；底栏永远不会掉到半空。
+     ============================================================ */
+
+  /* 外层：纵向两段式
+     ⚠️ flex:1 1 auto 必须有！少了这一条，#detailContent 会退化成
+     「按内容撑高」，内容多高它就多高，剩下的高度全堆在最底部成一块空白。
+     （实测 bug：aside 950px、detailContent 只有 749px） */
+  #detailContent{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    overscroll-behavior:contain;
+  }
+
+  /* 上部：唯一滚动区，吃掉中间所有剩余高度 */
+  #detailContent .dt-scroll{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+  }
+
+  /* 下部：固定工具栏 */
+  #detailContent .dt-fixed{
+    flex:0 0 auto;
+    border-top:1px solid var(--line);
+    background:var(--card);
+  }
+  /* 底栏自己的上边框由 .dt-fixed 承担，去掉重复的那条线 */
+  #detailContent .dt-fixed .foot{border-top:none}
+
+  /* ============================================================
+     正文框高度（2026-11-01 第 20 版，最终定稿）
+     ------------------------------------------------------------
+     踩了整整 4 轮「还是折叠在上面、下面那么大空位不填满」，最后想明白一件事：
+
+       **「撑满」不等于「框被拉到容器底」，而是「框里不留空白」。**
+
+     两者只在「内容比一屏矮」时重合；一旦内容比一屏高（比如 ①~⑩ 十条要点），
+     `flex:1` 会给出一个恰好一屏高的框，而文字比它还高 →
+     用户在滚动前看到的永远是「框里一坨小字 + 框底一条滚动条」，
+     滚到底才是下半段——视觉上就是「上面一点、下面全空」。
+
+     所以正文框一律 **flex:0 0 auto（高度 = 文字真实高度）**：
+       · 内容矮  → 字号自适应会放大，框自然长高，填满视野
+       · 内容高  → 框跟着字一起长，一屏放不下就整页滚，框里永远不会有空白
+     两种情况都不会出现「框比字高」的残影，这才是用户真正要的「铺满」。
+     ============================================================ */
+  #detailContent .content,
+  #detailContent .steps-body{
+    flex:0 0 auto;
+    overflow:visible;
+    max-height:none;
+    min-height:0;
+  }
+  #detailContent .steps{flex:0 0 auto}
+
+  /* ── 短内容「用满」模式（2026-11-01 第 22 版新增）──────────────────
+     一个绕不过去的物理事实：58 个字，就算放到 48px，也填不满一屏。
+     硬要填满 → 一屏两三个字的巨幅海报，不是用户要的「铺满」。
+
+     所以短内容换一种「用满」的姿势：
+       · 字号封顶在能读的大小（findFitSize 的 DET_FONT_SHORT_MAX）
+       · 正文框自己撑成一整屏（flex:1 1 auto，把剩余高度吃掉）
+       · 文字在这块地方**垂直居中**（justify-content:center）
+     视觉上：标题下面就是一大段居中排布的好读正文，四周余量均匀，
+             整块区域被「用上了」，而不是「一堆小字顶在最上面」。
+     内容变长时这个 class 会被去掉，回到「框 = 字高、整页滚动」的正常模式。 */
+  /* ⚠️⚠️ 2026-11-01 第 24 版修 bug：选择器原来写的是
+       `#detailContent .content.content-fill`
+     但 #dContent 本身就是 .content（不是 .content 的后代），
+     这条规则从来没匹配上 → 短内容框虽然被撑到底，字却仍挤在框顶。
+     改成直接点名 id，最稳。 */
+  /* ⚠️⚠️ 第 28 版：这里必须 !important。
+     实测 class 挂上了、justify:center 也生效，但 elFlex 仍是 "0 0 auto" ——
+     因为后面还有一条 `#detailContent .body .content{flex:0 0 auto}`（特异性更高），
+     把 flex 又压回去了，框没被拉到一屏高，居中只能在「文字高度」的框里做，
+     视觉上等于没变化。这是「模式开关」，不是布局微调，必须压过常规规则。 */
+  #dContent.content-fill{
+    flex:1 1 auto !important;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;          /* 默认：上下留白均匀 */
+    padding-top:10px;
+    padding-bottom:10px;
+  }
+  /* 备选对齐（2026-11-01 第 23 版）：短内容「贴着底部」。
+     用途：如果用户觉得居中「上下都空着不像铺满」，
+     给 <body> 加 data-fill-anchor="bottom" 就切成底对齐，
+     此时文字紧挨上传条，留白全集中在标题与正文之间。 */
+  body[data-fill-anchor="bottom"] #dContent.content-fill{
+    justify-content:flex-end;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     无图时「取消正文框」（2026-11-01 第 29 版，用户明确要求）
+     --------------------------------------------------------------
+     用户原话：「我要你把这个框在没有图片的情况下取消，铺满全部我花红框框的里面」
+
+     截图里问题很清楚：正文被一个灰白卡片框住（圆角 + 1px 描边 + 浅底），
+     卡片只占上半截，下半截透出壁纸，卡片内部还有一条滚动条。
+     之前几轮我一直在调「字号自适应」，方向就错了 ——
+     用户要的不是字更大，而是**不要那个卡片**，让文字自己铺满整块详情栏。
+
+     规则只在无图（#detailContent.no-media）时生效，有图仍保留卡片，
+     因为那时需要把正文和图片区分开。
+
+     注意三处「看起来没用但必须有」的写法：
+       · padding 左右压到 0 → 正文左边缘与标题「①去掉发黄…」严格对齐，
+         否则会多出 15px 缩进，看着像还套着一层看不见的框
+       · background/border/box-shadow 全部 transparent/none → 去掉卡片外观
+       · flex:1 1 auto!important → 一直撑到上传条上方，不再只裹住文字
+     ============================================================ */
+  #detailContent.no-media .content{
+    background:transparent !important;
+    border:0 !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    padding:2px 0 10px !important;
+    margin:0 !important;
+    flex:1 1 auto !important;
+    overflow:visible !important;
+    max-height:none !important;
+    display:block;
+    justify-content:flex-start;
+  }
+
+  /* 上传条：在滚动区里吸底，正文再长也能随手加图 */
+  /* 上传条已挪出滚动区（第 32 批）：不再需要 sticky 吸底，
+     它现在就是 #detailContent 纵向布局里的普通一行：
+     .dt-scroll（滚动） → .uploadbar（本条） → .dt-fixed（工具栏） */
+
+  /* ── 磨砂吸底条（2026-11-02 第 31 批）────────────────────────
+     用户实测反馈：「你这融一起了」——壁纸/视频模式下上传条与底栏
+     是半透明白（rgba(255,255,255,.1)），长正文从它们底下滚过时，
+     清晰的字直接透出来，和"添加图片"按钮、底部按钮糊在一起。
+     修法：给这两条加 backdrop-filter 磨砂。正文滚过去时变成
+     模糊色块，只透出壁纸的朦胧颜色，不再有清晰的字压在按钮上。
+     浅色主题下这两条本来就是不透明米白，backdrop-filter 无效果，
+     不受影响。 */
+  body.wp-on #detailContent .uploadbar,
+  body.bg-video #detailContent .uploadbar{
+    background:rgba(255,255,255,.16);
+    backdrop-filter:blur(16px) saturate(1.25);
+    -webkit-backdrop-filter:blur(16px) saturate(1.25);
+  }
+  body.wp-on #detailContent .dt-fixed,
+  body.bg-video #detailContent .dt-fixed{
+    background:rgba(255,255,255,.16);
+    backdrop-filter:blur(16px) saturate(1.25);
+    -webkit-backdrop-filter:blur(16px) saturate(1.25);
+  }
+
+  /* 正文的伸缩主体：让它把 .body 里剩下的高度全占了
+     ⚠️ 还要把 .body 里那些「空着的兄弟节点」也压成 0，否则它们之间的
+        margin（.tags 12px / .desc / .medias 16px）会吃掉几十像素，
+        实测 512x1000：.body=821 而正文只有 723，差的 98px 就是这么来的。 */
+  /* .body 用 1 0 auto：可以「长高」但不会被压缩，内容短时它把上传条推到底部；
+     正文本身 flex:0 0 auto 不吃剩余高度，剩余高度就由 .uploadbar 的
+     margin-top:auto 吃掉（那是一条合法的「留白」，在文字之后、上传条之前，
+     而且内容一长它立刻归零——不会像刚才那样把空白留在框里）。 */
+  #detailContent .body{flex:1 0 auto;display:flex;flex-direction:column}
+  #detailContent .body .content{flex:0 0 auto}
+  #detailContent .body > .tags:empty,
+  #detailContent .body > .desc:empty,
+  #detailContent .body > .medias:empty{display:none!important;margin:0!important}
+  /* 正文是 .body 里唯一要撑开的东西，给它清掉下边距，避免框底多出一条缝 */
+  #detailContent .body > .content:last-of-type{margin-bottom:0}
+  /* ⚠️⚠️ 2026-11-01 返工第 16 版：**不要**给 font-size 加 transition！
+     原来是 `transition:font-size .12s ease-out`，本意是让字号变化柔和一点，
+     结果成了最难查的 bug：
+       · 每次设字号都会生成一个 CSSTransition，它的动画值在层叠里**高于内联样式**
+       · 测量是同步跑几十次字号，过渡还没推进完就被下一次覆盖 → 过渡卡在中间态
+       · 实测残留的过渡停在 fontSize:0px，此后 el.style.fontSize 设成
+         13/20/32 全都没反应，getComputedStyle 永远返回同一个值
+         → 正文高度恒定、overflow 判据恒定 → 字号一路顶到上限，反而撑出一屏滚动
+       · 而且它跑在动画帧里，Playwright/无头环境下不一定推进 =
+         「代码看起来没问题，行为就是不对」的典型
+     字号本来就是「算好了直接套」，不需要动画。真想要柔和效果，
+     将来用 transform/opacity 之类的合成属性做，别碰会触发重排的 font-size。 */
+
+  /* ===== 字号自适应的「测量态」（2026-11-01 返工第 15 版）=====
+     ⚠️⚠️ 病根：正文是 flex:1 1 auto，只要内容比可视区矮，
+        浏览器就把框一路拉到容器底部 → 框高恒等于容器高
+        → 「有没有溢出」永远测不出来（字号从 24px 改到 32px，
+          contentH 一直是 846px，scrollHeight 一直是 1022px，一动不动）。
+        结果字一直被放大到 32px 上限，直接顶出一屏滚动。
+     解法：测量期间给 .body 挂 .dt-measuring，
+        正文改成 flex:0 0 auto（框高=文字真实高度），
+        此时 overflow 判据才恢复灵敏；测完立刻摘掉。 */
+  #detailContent.dt-measuring .content,
+  #detailContent.dt-measuring .steps-body{flex:0 0 auto}
+  /* ⚠️ 光把正文改成 flex:0 0 auto 还不够：.body 自己是 flex:1 1 auto（被拉到容器底部），
+     正文一变成「按内容高」，.body 内部剩下的空间会分给别的子节点（.preview 的 margin-top:auto 之类），
+     正文高度读数仍然是 846px 一动不动。必须把 .body 也一起改成「按内容高」才行。 */
+  #detailContent.dt-measuring .body{flex:0 0 auto}
+  /* ⚠️⚠️ 千万不要在测量态里把 .dt-scroll 也改成 flex:0 0 auto → 试过，会出事：
+     .dt-scroll 一「按内容撑高」，它的 clientHeight 就跟着内容一起长
+     （实测 13px 时 clientH 直接变成 1159，scrollH 也是 1159），
+     scrollHeight > clientHeight 的判据反而永远不成立 → 字号一路加到上限。
+     所以测量态只放开 .body/.content，滚动容器保持「锁死在可视高度」，
+     这样 clientHeight 才是真正的可用高度，判据才可靠。 */
+
+  /* 有图时：预览区在滚动区里吸底（说明已由 reflowDetailDesc 挪到它前面） */
+  /* 预览区已挪出滚动区（第 34 批）：不再是吸底悬浮层，就是布局里的普通一段：
+     .dt-scroll（滚动） → .preview（本块，有图才显示） → .uploadbar → .dt-fixed */
+    #detailContent:not(.no-media) .preview{
+    flex:0 0 auto;
+    margin:0;
+    padding:10px 18px 12px;
+    background:var(--card);
+    border-top:1px solid var(--line);
+    box-shadow:0 -8px 16px -12px rgba(0,0,0,.25);
+  }
+
+  .var-badge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;
+    background:var(--primary-bg);color:var(--primary);border-radius:20px;
+    padding:1px 8px;font-weight:600;vertical-align:middle;margin-left:6px}
+  /* ===== 角色资产仓库（2026-11-16 第43批）=====
+     全部走 CSS 变量，壁纸/深色主题自动适配，不硬编码颜色。 */
+  .roles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:14px}
+  .role-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+  .role-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--primary-soft)}
+  .role-cover{height:190px;background:var(--primary-bg);display:grid;place-items:center;overflow:hidden;position:relative}
+  .role-cover img,.role-cover video{width:100%;height:100%;object-fit:contain;display:block}
+  .role-cover .ph{font-size:46px;color:var(--primary);opacity:.45}
+  .role-body{padding:12px 14px 14px}
+  .role-body h3{margin:0 0 5px;font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .role-body .rmeta{font-size:12px;color:var(--muted);margin-bottom:7px}
+  .role-body .rprompt{font-size:12px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px}
+  .role-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .role-tags .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg);color:var(--muted)}
+  .role-ops{position:absolute;top:8px;right:8px;display:flex;gap:5px;z-index:2}
+  .role-ops button{width:26px;height:26px;border:1px solid var(--line);border-radius:8px;background:var(--surface-solid);color:var(--ink);cursor:pointer;font-size:12px;line-height:1;display:grid;place-items:center}
+  .role-ops button:hover{border-color:var(--primary-soft);color:var(--primary)}
+  .role-fav{position:absolute;top:8px;left:8px;z-index:2;font-size:15px;cursor:pointer}
+  .role-copy{margin-top:9px;width:100%;padding:5px 0;border:1px solid var(--primary-soft);border-radius:8px;background:transparent;color:var(--primary);font-size:11.5px;cursor:pointer}
+  .role-copy:hover{background:var(--primary-bg)}
+  .role-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .role-thumbs .rt{position:relative;width:64px;height:64px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .role-thumbs .rt img,.role-thumbs .rt video{width:100%;height:100%;object-fit:cover}
+  .role-thumbs .rt button{position:absolute;top:1px;right:1px;width:16px;height:16px;border:0;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:1;cursor:pointer}
+  /* ===== 剧本笔记（2026-11-17 第44批）：像 txt 记事本一样存纯文本剧本 ===== */
+  .scripts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .script-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+  .script-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--primary-soft)}
+  .script-body{padding:12px 14px 14px}
+  .script-body h3{margin:0 80px 5px 0;font-size:14.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .smeta{font-size:11.5px;color:var(--muted);margin-bottom:8px}
+  .spreview{margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,"Courier New",monospace;font-size:11.5px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-word;height:96px;overflow:hidden;background:var(--bg);border-radius:8px;padding:8px 10px}
+  .script-ops{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2}
+  .script-ops button{width:24px;height:24px;border:1px solid var(--line);border-radius:7px;background:var(--surface-solid);color:var(--ink);cursor:pointer;font-size:11px;line-height:1;display:grid;place-items:center}
+  .script-ops button:hover{border-color:var(--primary-soft);color:var(--primary)}
+  .script-editor{width:100%;min-height:300px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,"Courier New",monospace;font-size:13px;line-height:1.65;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);tab-size:2}
+  .script-meta-line{font-size:11.5px;color:var(--muted);margin-top:6px;text-align:right}
+
+  /* ===== 第48批：剧本编辑器可缩放窗口 + 顶栏 + 最小化（2026-11-17）=====
+     去掉第45批的全屏：改回居中窗口，可拖右下角缩放。
+     顶栏左 ‹ 返回 / 中 标题 / 右 − 最小化 ✕ 取消；底部只留删除/保存。
+     − 最小化后右下角出现悬浮条，点击恢复。 */
+  #scriptOverlay{padding:16px}
+  #scriptOverlay .script-modal-full{
+    width:min(1000px,94vw);height:min(720px,90vh);max-width:none;max-height:none;
+    min-width:460px;min-height:340px;border-radius:14px;border:1px solid var(--line);
+    animation:none;display:flex;flex-direction:column;overflow:hidden;resize:none
+  }
+  /* 顶栏：‹ 返回 / 标题 / − 最小化 · ✕ 取消 */
+  #scriptOverlay .script-modal-full h2{flex:0 0 auto;padding:0;font-size:14px;border-bottom:1px solid var(--line);cursor:move;user-select:none;-webkit-user-select:none}
+  #scriptOverlay .sw-bar{display:flex;align-items:center;gap:8px;padding:8px 12px}
+  #scriptOverlay .sw-back,#scriptOverlay .sw-min,#scriptOverlay .sw-x{width:34px;height:34px;flex:0 0 34px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:22px;line-height:1;display:grid;place-items:center;cursor:pointer;transition:.15s;padding:0}
+  #scriptOverlay .sw-back:hover,#scriptOverlay .sw-min:hover,#scriptOverlay .sw-x:hover{background:var(--bg);color:var(--ink);border-color:var(--line)}
+  #scriptOverlay .sw-back:active,#scriptOverlay .sw-min:active,#scriptOverlay .sw-x:active{transform:scale(.94)}
+  #scriptOverlay .sw-x{font-size:16px}
+  #scriptOverlay .sw-center{flex:1;display:flex;align-items:center;gap:8px;justify-content:center;font-size:15px;font-weight:800}
+  #scriptOverlay .sw-actions{display:flex;gap:4px}
+  /* 内部布局（沿用第45批的记事本式排版） */
+  #scriptOverlay .script-modal-full>.body{
+    display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;flex:1 1 auto;min-height:0
+  }
+  #scriptOverlay .script-modal-full>.body>.field:first-child{
+    flex:0 0 auto;margin:0;padding:8px 20px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:12px
+  }
+  #scriptOverlay .script-modal-full>.body>.field:first-child label{margin:0;flex:0 0 auto}
+  #scriptOverlay .script-modal-full>.body>.field:first-child input{
+    flex:1 1 auto;border:0;background:transparent;font-size:15px;font-weight:700;padding:4px 0
+  }
+  #scriptOverlay .script-modal-full>.body>.field:nth-child(2){
+    flex:1 1 auto;min-height:0;margin:0;display:flex;flex-direction:column;padding:0
+  }
+  #scriptOverlay .script-modal-full>.body>.field:nth-child(2) label{flex:0 0 auto;padding:8px 20px 0}
+  #scriptOverlay .script-modal-full .script-editor{
+    flex:1 1 auto;min-height:0;height:auto;resize:none;border:0;border-radius:0;
+    padding:14px 20px;font-size:15px;line-height:1.9;background:var(--surface-solid)
+  }
+  #scriptOverlay .script-modal-full #scriptMeta{flex:0 0 auto;padding:6px 20px 10px}
+  #scriptOverlay .script-modal-full .links-head{
+    flex:0 0 auto;margin:0!important;padding:9px 20px;border-top:1px solid var(--line)
+  }
+  #scriptOverlay .script-modal-full .hint-inline{flex:0 0 auto;padding:0 20px 8px}
+  /* 底部按钮栏固定可见；右侧多留 28px 避开缩放把手 */
+  #scriptOverlay .script-modal-full .foot{flex:0 0 auto;padding:10px 34px 10px 20px}
+  /* 最小化后的悬浮恢复条 */
+  .script-dock{position:fixed;right:24px;bottom:24px;z-index:118;display:flex;align-items:center;gap:8px;max-width:270px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer;font-size:13px;transition:.15s}
+  .script-dock:hover{border-color:var(--primary);transform:translateY(-2px)}
+  .script-dock .dock-ico{font-size:16px;flex:0 0 auto}
+  .script-dock .dock-title{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+  .script-dock .dock-tip{color:var(--muted);font-size:11px;flex:0 0 auto}
+
+  /* ===== 第46批：角色设定图大图预览灯箱 ===== */
+  .rv-overlay{position:fixed;inset:0;background:rgba(8,10,16,.94);z-index:120;display:none;align-items:center;justify-content:center}
+  .rv-overlay.show{display:flex}
+  .rv-overlay .rv-stage{max-width:94vw;max-height:88vh;display:flex;align-items:center;justify-content:center}
+  .rv-overlay .rv-stage img,.rv-overlay .rv-stage video{max-width:94vw;max-height:82vh;object-fit:contain;border-radius:8px;box-shadow:0 12px 48px rgba(0,0,0,.55)}
+  .rv-overlay button{border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.1);color:#fff;cursor:pointer;display:grid;place-items:center;transition:.15s}
+  .rv-overlay button:hover{background:rgba(255,255,255,.22)}
+  .rv-overlay .rv-close{position:absolute;top:18px;right:22px;width:40px;height:40px;border-radius:50%;font-size:18px}
+  .rv-overlay .rv-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;font-size:28px;line-height:1}
+  .rv-overlay .rv-prev{left:20px}
+  .rv-overlay .rv-next{right:20px}
+  .rv-overlay .rv-caption{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.86);font-size:13px;background:rgba(0,0,0,.45);padding:6px 16px;border-radius:999px;white-space:nowrap}
+
+  /* ===== 第47批：角色编辑弹窗顶栏（返回 / 关闭）===== */
+  #roleOverlay .rt-bar{display:flex;align-items:center;padding:8px 12px;gap:8px}
+  #roleOverlay .rt-back,#roleOverlay .rt-x{width:34px;height:34px;flex:0 0 34px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:22px;line-height:1;display:grid;place-items:center;cursor:pointer;transition:.15s;padding:0}
+  #roleOverlay .rt-back:hover,#roleOverlay .rt-x:hover{background:var(--bg);color:var(--ink);border-color:var(--line)}
+  #roleOverlay .rt-back:active,#roleOverlay .rt-x:active{transform:scale(.94)}
+  #roleOverlay .rt-x{font-size:16px}
+  #roleOverlay .rt-center{flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-start;font-size:16px;font-weight:800}
+  /* ===== 第50批：剧本窗口四角缩放把手（2026-11-17）=====
+     自定义四角把手，固定对角缩放；每次打开重置为默认尺寸。 */
+  #scriptOverlay .script-modal-full .rz-handle{
+    position:absolute;width:18px;height:18px;z-index:6;
+    -webkit-user-select:none;user-select:none;touch-action:none
+  }
+  #scriptOverlay .script-modal-full .rz-handle::after{
+    content:"";position:absolute;width:11px;height:11px;
+    border-color:var(--muted);opacity:.45;transition:.15s
+  }
+  #scriptOverlay .script-modal-full .rz-handle:hover::after{opacity:1;border-color:var(--primary)}
+  #scriptOverlay .script-modal-full .rz-nw{left:0;top:38px;cursor:nwse-resize}
+  #scriptOverlay .script-modal-full .rz-ne{right:0;top:38px;cursor:nesw-resize}
+  #scriptOverlay .script-modal-full .rz-sw{left:0;bottom:0;cursor:nesw-resize}
+  #scriptOverlay .script-modal-full .rz-se{right:0;bottom:0;cursor:nwse-resize}
+  #scriptOverlay .script-modal-full .rz-nw::after{left:3px;top:3px;border-left:2px solid;border-top:2px solid}
+  #scriptOverlay .script-modal-full .rz-ne::after{right:3px;top:3px;border-right:2px solid;border-top:2px solid}
+  #scriptOverlay .script-modal-full .rz-sw::after{left:3px;bottom:3px;border-left:2px solid;border-bottom:2px solid}
+  #scriptOverlay .script-modal-full .rz-se::after{right:3px;bottom:3px;border-right:2px solid;border-bottom:2px solid}
 </style>
 <link rel="stylesheet" href="theme-bg-video.css">
 <link rel="stylesheet" href="theme-wallpaper.css">
@@ -757,6 +1203,8 @@
     <div class="sb-body" data-page-node-id="I4Llr4vgt5DpszOoIVGDQt">
       <div class="nav-item active" data-mode="all" data-page-node-id="LRGkHcAN5f8HVVqdWTBZm0"><div class="left" data-page-node-id="UKJ7rvCI4YZLxEU2DeO6K2"><span class="icon" data-page-node-id="3L85o6wHLPNs2k76RjxPOi">📂</span>全部提示词</div><span class="badge" id="navAll" data-page-node-id="CCvLFLCgUm7Fn5B5PqfGt1">0</span></div>
       <div class="nav-item" data-mode="links" data-page-node-id="3yUr1zDdwwGZKKKZLLhLKf"><div class="left" data-page-node-id="ny9VZL6WpQTwew2CO2rtxi"><span class="icon" data-page-node-id="jgxOGCmrV6rOso8ZzXfa5M">🌐</span>网址收藏</div><span class="badge" id="navLinks" data-page-node-id="JZM5VxRcEE94RD1cw2UlXg">0</span></div>
+      <div class="nav-item" data-mode="roles"><div class="left"><span class="icon">🎭</span>角色仓库</div><span class="badge" id="navRoles">0</span></div>
+      <div class="nav-item" data-mode="scripts"><div class="left"><span class="icon">📝</span>剧本笔记</div><span class="badge" id="navScripts">0</span></div>
       <div class="cat-head" data-page-node-id="SHjtSX49snVGROEAHkRsqC"><span class="label" data-page-node-id="mygLnAfNY0lrhBMp0uUvKL">分类</span><button class="plus" id="btnAddCat" title="添加分类" data-page-node-id="mg23rRFybDyiPSVxPb4QqL">＋</button></div>
       <div class="cat-list" id="catList" data-page-node-id="S2wJjXsGGWnArR0M3edvMq"></div>
       <div class="nav-item" data-mode="shortcuts" data-page-node-id="ubdBYD2JOZyWOwEFeE52NO"><div class="left" data-page-node-id="aTKN0EYDsoxoMd4eH03dXP"><span class="icon" data-page-node-id="WyvXMoNxPBLjtVgzbPmxQ5">⚡</span>快捷</div><span class="badge" id="navShort" data-page-node-id="yNECqDpFbj4GFkOGoXE6KS">0</span></div>
@@ -787,6 +1235,8 @@
       <div class="actions" data-page-node-id="Rx5vSpCAy98fbLJblo5vEp">
         <button class="btn gold" id="topExport" title="备份全部数据为 JSON" aria-label="备份或导出" data-page-node-id="jldWHBRqFD7BAbmafQ9ny6"><span class="bi">💾</span><span class="bt">备份/导出</span></button>
         <button class="btn" id="topImport" title="从 JSON 文件恢复或合并数据" aria-label="导入" data-page-node-id="eM5lMvsnMMj3P2mq7fhXLG"><span class="bi">📥</span><span class="bt">导入</span></button>
+        <button class="btn" id="btnBatchImport" title="选择一个文件夹，把里面的图片/视频批量建成提示词卡片" aria-label="批量导入"><span class="bi">⇪</span><span class="bt">批量导入</span></button>
+        <input type="file" id="batchDirInput" webkitdirectory multiple style="display:none">
         <button class="btn primary" id="btnAdd" aria-label="新建提示词" data-page-node-id="a4Axr8W9y7G28lkFsl3l3x"><span class="bi">＋</span><span class="bt">新建提示词</span></button>
       </div>
     </div>
@@ -820,6 +1270,26 @@
         <div class="links-grid" id="teachersGrid"></div>
         <div class="empty-state" id="teachersEmpty" style="display:none"><div class="big">🎓</div><div>还没有记录指导老师，点击「＋ 添加老师」把姓名、电话、邮箱存起来，报名时一键复制</div></div>
       </div>
+      <!-- 角色资产仓库：存角色设定图 + 档案 + Prompt（2026-11-16 第43批） -->
+      <div class="links-view" id="rolesView" style="display:none">
+        <div class="links-head">
+          <button class="btn primary" id="btnAddRole"><span class="bi">＋</span><span class="bt">添加角色</span></button>
+          <button class="btn" id="btnCopyAllRoles" title="把全部角色的 Prompt 排成一段文字复制走">📋<span class="bt">全部复制</span></button>
+        </div>
+        <div class="link-filter" id="roleFilter"></div>
+        <div class="roles-grid" id="rolesGrid"></div>
+        <div class="empty-state" id="rolesEmpty" style="display:none"><div class="big">🎭</div><div>还没有角色资产，点击「＋ 添加角色」开始建立角色档案吧</div></div>
+      </div>
+      <!-- 剧本笔记：像电脑 txt 记事本一样存纯文本剧本（2026-11-17 第44批） -->
+      <div class="links-view" id="scriptsView" style="display:none">
+        <div class="links-head">
+          <button class="btn primary" id="btnAddScript"><span class="bi">＋</span><span class="bt">新建剧本</span></button>
+          <button class="btn" id="btnImportScript" title="选择一个或多个 .txt 文本文件，每篇存成一个剧本"><span class="bi">📂</span><span class="bt">导入 TXT</span></button>
+          <input type="file" id="scriptFileInput" accept=".txt,text/plain" multiple style="display:none">
+        </div>
+        <div class="scripts-grid" id="scriptsGrid"></div>
+        <div class="empty-state" id="scriptsEmpty" style="display:none"><div class="big">📝</div><div>还没有剧本，点「＋ 新建剧本」开始写，或「导入 TXT」把已有 txt 放进来</div></div>
+      </div>
       <div class="grid" id="grid" data-page-node-id="zkQCMiy1FCsTw5HrhjClTn"></div>
       <div class="empty-state" id="empty" style="display:none" data-page-node-id="ZUdOPkuKlJ0JQVKxS02Iq5"><div class="big" data-page-node-id="TVTypBGiPjpJA8mNrYpkXF">📭</div><div data-page-node-id="W9rjOiPXUApvhORfBTAOJ2">暂无提示词，点击右上角「＋ 新建提示词」开始收藏吧</div></div>
     </div>
@@ -832,13 +1302,19 @@
   <!-- RIGHT DETAIL -->
   <aside class="detail" id="detailPanel" data-page-node-id="cRL6Zmi0GM0Fb7dgLNGEmf">
     <div class="placeholder" id="detailEmpty" data-page-node-id="CLV9nAjyRq8Yrp68Lw7zFB"><div class="icon" data-page-node-id="04e59CR6or3QxPPYQIPaaD">📖</div><div data-page-node-id="FltdMkD6RDylaM84tCvBqk">选择左侧提示词查看详情</div></div>
-    <div id="detailContent" style="display:none;flex-direction:column;height:100%" data-page-node-id="5aX1hXKcBWPeCMrQkaHuhe">
+    <div id="detailContent" style="display:none" data-page-node-id="5aX1hXKcBWPeCMrQkaHuhe">
+      <!-- 上部：唯一滚动区（顶栏 + 正文 + 上传条）
+           flex:1 1 auto 让它吃掉「窗口高度 − 底部工具栏」的全部剩余空间：
+           内容再短也不会在下面空一块；内容太长则在这一层里滚。 -->
+      <div class="dt-scroll" id="dtScroll">
+
       <div class="head" data-page-node-id="eWtcKWyG3BN5Ql0BcDWz6W">
         <div class="left" data-page-node-id="My5ZDjCC00ppotahJV3aQH"><span class="cat" id="dCat" data-page-node-id="QKFAX6ApY1zFWR6M7GFiN4">未分类</span><span class="count" id="dCount" data-page-node-id="uF3EK7q2kutmTPYqK8voR4">1 / 1</span></div>
         <div class="right" data-page-node-id="cwamPZAF7BPPXVlwvSLDDO">
           <button title="上一条" id="dPrev" data-page-node-id="652hPaFsCGWeQzna4rkHFU">‹</button>
           <button title="下一条" id="dNext" data-page-node-id="lIORm7WvdsCS9udhwc0fjt">›</button>
           <button title="编辑" id="dEdit" data-page-node-id="r2Tw43wLQQlFoaExpAXwi8">✎</button>
+          <button title="版本历史" id="dVersion">🕘</button>
           <button class="star" title="收藏" id="dStar" data-page-node-id="n5ArgY3KNhUHPSui8qYFjT">☆</button>
           <button title="删除" id="dDelete" data-page-node-id="8lFIvslyhaodGMCDkwKNT7">🗑</button>
           <button title="关闭" id="dClose" data-page-node-id="Am6mLQg09lhSg42yrhHDhE">×</button>
@@ -851,14 +1327,23 @@
              事件监听都引用 #dMedias，删掉会引发连锁报错。 -->
         <div class="medias" id="dMedias" style="display:none" data-page-node-id="8ZtkDAKpXtAiPBRGklNVWi"></div>
         <div class="content" id="dContent" data-page-node-id="6QO41R7tnnTST60SIIIgDy"></div>
-        <div class="steps" id="dSteps" style="display:none" data-page-node-id="WfZCjl1xbck9Jf5KTgSCfA">
+        <div class="steps" id="dSteps" style="display:none;flex:0 0 auto;flex-direction:column" data-page-node-id="WfZCjl1xbck9Jf5KTgSCfA">
           <div class="steps-tabs" id="dStepTabs" data-page-node-id="GgcJmlopPs2H9qcgEEFddL"></div>
           <div class="steps-body" id="dStepBody" data-page-node-id="METOzvEsdEgVfGXE5KGM5c"></div>
         </div>
         <div class="tags" id="dTags" data-page-node-id="Rpm2b1wZ77NO0mu1vfwydy"></div>
         <div class="desc" id="dDesc" data-page-node-id="gk8wbJAELLDSyoAjrcUnCT"></div>
 
-        <!-- 图片预览：参考应用商店「预览」——竖版卡片横排一行、左右滑动 -->
+        
+      </div>
+
+</div><!-- /.dt-scroll -->
+
+      <!-- 预览区（2026-11-05 第 34 批挪出滚动区）：原来 sticky 吸底悬浮在滚动区里，
+           长正文从它底下滚过会透出来和图片糊在一起（用户实测）。
+           现在挂在 .dt-scroll 外面：正文区到预览区上沿为止，物理上不可能再穿过。
+           没图时整块 display:none，不占位。 -->
+<!-- 图片预览：参考应用商店「预览」——竖版卡片横排一行、左右滑动 -->
         <div class="preview" id="dPreview" style="display:none">
           <div class="preview-head">
             <span class="preview-title">预览</span>
@@ -879,8 +1364,11 @@
             </div>
           </div>
         </div>
-      </div>
 
+      <!-- 上传条（2026-11-02 第 32 批挪出滚动区）：原来 sticky 吸底在 .dt-scroll 里，
+           长正文从它底下滚过会透出来和按钮糊在一起（用户实测「融一起了」）。
+           现在挂在 .dt-scroll 外面、.dt-fixed 上面：滚动区到上传条上沿为止，
+           正文物理上不可能再穿过它。 -->
       <!-- 上传区：固定在详情栏最底部（foot 上方），永远可见、不随内容滚走 -->
       <div class="uploadbar" id="dropzone" data-page-node-id="YNqbvayqX8iCZxjATWbfn2">
         <button class="uploadbar-btn" type="button" id="uploadBtn" title="添加图片 / 视频">
@@ -891,9 +1379,53 @@
         <input type="file" id="fileInput" accept="image/*,video/*" multiple data-page-node-id="cncwV9sFBqjAVqt9zHOqV1">
       </div>
 
-      <div class="foot" data-page-node-id="cpKnL6v6LYDyreHtzYnBWE"><button class="btn" id="dCopy" data-page-node-id="6jHiq9Tpui997VhK0XJtUI">复制内容</button><button class="btn primary" id="dUse" data-page-node-id="qsVIUgUOPckohlDC8bqrGU">去使用</button></div>
+      <!-- 下部：固定工具栏（复制 / 去使用 永远贴底，不随正文滚走） -->
+      <div class="dt-fixed" id="dtFixed">
+
+      <div class="foot" data-page-node-id="cpKnL6v6LYDyreHtzYnBWE"><button class="btn" id="btnPng" title="从出图 PNG 里提取生成参数">🖼 从图片提取</button><button class="btn" id="dCopy" data-page-node-id="6jHiq9Tpui997VhK0XJtUI">复制内容</button><button class="btn primary" id="dUse" data-page-node-id="qsVIUgUOPckohlDC8bqrGU">去使用</button></div>
+      </div><!-- /.dt-fixed -->
     </div>
   </aside>
+</div>
+
+<!-- Trash Modal（2026-11-05 从 MISTY 移植） -->
+<div class="overlay" id="trashOverlay">
+  <div class="modal">
+    <h2>🗑 回收站 <span id="trashCount" style="font-size:13px;color:var(--txt-3)"></span></h2>
+    <div class="body">
+      <div id="trashList" style="max-height:52vh;overflow-y:auto"></div>
+      <div class="field" style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" id="trashClose">关闭</button>
+        <button class="btn danger" id="trashEmpty">清空回收站</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tag Manager Modal -->
+<div class="overlay" id="tagOverlay">
+  <div class="modal">
+    <h2>🏷 标签管理 <span id="tagCount" style="font-size:13px;color:var(--txt-3)"></span></h2>
+    <div class="body">
+      <div id="tagMgrList" style="max-height:52vh;overflow-y:auto"></div>
+      <div class="field" style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" id="tagMgrClose">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Health Modal -->
+<div class="overlay" id="healthOverlay">
+  <div class="modal">
+    <h2>🩺 存储体检</h2>
+    <div class="body">
+      <div id="healthBody" style="max-height:56vh;overflow-y:auto"></div>
+      <div class="field" style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" id="healthClose">关闭</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Edit Modal -->
@@ -928,6 +1460,69 @@
       <div class="field" data-page-node-id="ZyhrpXFDshpUeMRtin3zNb"><label data-page-node-id="sN14Z3AQJzCZPgAoXHC8PX">使用说明（可选）</label><textarea id="fDesc" placeholder="例如：适合做角色设定，需保持多视图一致"></textarea></div>
     </div>
     <div class="foot" data-page-node-id="TNnbjkfYtomycyh2cnFpGb"><button class="btn" id="btnCancel" data-page-node-id="zikRxxy9Oe9IvEWNveGjzY">取消</button><button class="btn primary" id="btnSave" data-page-node-id="Hv3GCo2TPyGaeKgG6xlVA8">保存</button></div>
+  </div>
+</div>
+
+<!-- ===== 变量填空弹窗（{{var}} 模板） ===== -->
+<div class="overlay" id="varOverlay">
+  <div class="modal" style="max-width:520px">
+    <h2><span>🧩</span><span>填空后复制</span></h2>
+    <div class="body">
+      <div class="hint-block" id="varHint">这条提示词含 <b id="varCount">0</b> 个可替换位置。填好下面几项，点「复制结果」拿到成品；留空的会保留 <code>{{变量}}</code> 原样。</div>
+      <div id="varForm"></div>
+      <div class="field">
+        <label>预览（实时更新）</label>
+        <div class="var-preview" id="varPreview"></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="varReset">恢复默认</button>
+      <button class="btn" id="varCancel">取消</button>
+      <button class="btn primary" id="varCopy">复制结果</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 版本历史弹窗 ===== -->
+<div class="overlay" id="verOverlay">
+  <div class="modal" style="max-width:600px">
+    <h2><span>🕘</span><span>版本历史</span></h2>
+    <div class="body">
+      <div class="hint-block" id="verHint">每次保存修改都会自动留一份快照，可随时回滚。</div>
+      <div class="ver-list" id="verList"></div>
+      <div class="field" id="verPreviewWrap" style="display:none">
+        <label>该版本内容预览</label>
+        <div class="var-preview" id="verPreview"></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="verClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PNG 参数提取弹窗 ===== -->
+<div class="overlay" id="pngOverlay">
+  <div class="modal" style="max-width:600px">
+    <h2><span>🖼</span><span>从出图 PNG 提取参数</span></h2>
+    <div class="body">
+      <div class="hint-block">
+        把 Stable Diffusion / ComfyUI / NovelAI 等工具生成的 PNG 拖进来（或点下方按钮选择）。<br>
+        图片里如果嵌了生成参数，会自动解析出提示词、负面提示词、种子、模型、采样器等，并填进「新建提示词」表单。
+      </div>
+      <div class="png-drop" id="pngDrop">
+        <div class="png-drop-ico">📥</div>
+        <div class="png-drop-t1">把 PNG 拖到这个框里</div>
+        <div class="png-drop-t2">支持一次拖多张，只读取参数、不保存图片</div>
+        <button class="btn" id="pngPick" type="button">选择 PNG 文件</button>
+        <input type="file" id="pngFile" accept="image/png,.png" multiple style="display:none">
+      </div>
+      <div class="png-result" id="pngResult" style="display:none"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="pngClose">关闭</button>
+      <button class="btn primary" id="pngApply" disabled>填入新建表单</button>
+    </div>
   </div>
 </div>
 
@@ -994,6 +1589,92 @@
   </div>
 </div>
 
+<!-- 剧本笔记弹窗（2026-11-17 第44批）：纯文本，可粘贴/导入/导出 TXT -->
+<div class="overlay" id="scriptOverlay">
+  <div class="modal script-modal-full">
+        <div class="rz-handle rz-nw" data-rz="nw" title="拖动缩放"></div>
+    <div class="rz-handle rz-ne" data-rz="ne" title="拖动缩放"></div>
+    <div class="rz-handle rz-sw" data-rz="sw" title="拖动缩放"></div>
+    <div class="rz-handle rz-se" data-rz="se" title="拖动缩放"></div>
+    <h2 class="sw-bar">
+      <button class="sw-back" id="scriptBack" type="button" title="返回 / 关闭">‹</button>
+      <span class="sw-center"><span>📝</span><span id="scriptModalTitle">新建剧本</span></span>
+      <span class="sw-actions">
+        <button class="sw-min" id="scriptMin" type="button" title="最小化">−</button>
+        <button class="sw-x" id="scriptX" type="button" title="取消 / 关闭">✕</button>
+      </span>
+    </h2>
+    <div class="body">
+      <div class="field"><label>剧本标题（导出时作文件名）</label><input id="fScriptTitle" type="text" placeholder="例如：《猫》短片 · 分镜脚本"></div>
+      <div class="field">
+        <label>正文（纯文本，可直接粘贴；输入即自动保存到本机）</label>
+        <textarea id="fScriptContent" class="script-editor" spellcheck="false" placeholder="像电脑记事本一样，直接写或粘贴剧本正文……"></textarea>
+        <div class="script-meta-line" id="scriptMeta">0 字 · 0 行</div>
+      </div>
+      <div class="links-head" style="margin-top:4px">
+        <input type="file" id="fScriptImport" accept=".txt,text/plain" style="display:none">
+        <button class="btn" id="importCurScript" title="读取一个 .txt 文件，内容追加到当前正文">📂 导入 TXT 到正文</button>
+        <button class="btn" id="exportCurScript" title="把当前剧本导出为 .txt 文件">⇩ 导出为 TXT</button>
+      </div>
+      <div class="hint-inline">导出的 .txt 带 UTF-8 BOM，Windows 记事本直接打开不乱码。改动每 0.4 秒自动存一次，关窗也会存。</div>
+    </div>
+    <div class="foot">
+      <button class="btn danger" id="scriptDelete" style="display:none;margin-right:auto">删除</button>
+      <button class="btn" id="scriptCancel" style="display:none">关闭</button>
+      <button class="btn primary" id="scriptSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="script-dock" id="scriptDock" style="display:none" title="点击恢复剧本编辑窗口">
+  <span class="dock-ico">📝</span><span class="dock-title" id="scriptDockTitle">剧本</span><span class="dock-tip">点击恢复</span>
+</div>
+<!-- 角色设定图大图预览灯箱（2026-11-17 第46批） -->
+<div class="rv-overlay" id="roleViewer" style="display:none">
+  <button class="rv-close" id="rvClose" title="关闭">✕</button>
+  <button class="rv-nav rv-prev" id="rvPrev" title="上一张">‹</button>
+  <div class="rv-stage" id="rvStage"></div>
+  <button class="rv-nav rv-next" id="rvNext" title="下一张">›</button>
+  <div class="rv-caption"><span id="rvTitle"></span> · <span id="rvCount">1 / 1</span></div>
+</div>
+<!-- 角色资产弹窗（2026-11-16 第43批） -->
+<div class="overlay" id="roleOverlay">
+  <div class="modal" style="max-width:560px">
+    <h2 class="rt-bar">
+      <button class="rt-back" id="roleBack" type="button" title="返回 / 关闭">‹</button>
+      <span class="rt-center"><span id="roleIcon">＋</span><span id="roleTitle">添加角色</span></span>
+      <button class="rt-x" id="roleX" type="button" title="取消 / 关闭">✕</button>
+    </h2>
+    <div class="body">
+      <div class="row2">
+        <div class="field"><label>角色名（可留空，默认「未命名角色」）</label><input id="fRName" type="text" placeholder="例如：阿桔"></div>
+        <div class="field"><label>所属作品 / 分类</label><input id="fRCat" type="text" placeholder="例如：《猫》短片 / 原创 IP"></div>
+      </div>
+      <div class="field"><label>标签（逗号分隔）</label><input id="fRTags" type="text" placeholder="少女, 古风, 主角"></div>
+      <div class="row2">
+        <div class="field"><label>身份定位</label><input id="fRRole" type="text" placeholder="例如：落魄的剪纸艺人"></div>
+        <div class="field"><label>年龄</label><input id="fRAge" type="text" placeholder="例如：17"></div>
+      </div>
+      <div class="field"><label>外貌设定</label><textarea id="fRAppearance" style="min-height:56px" placeholder="五官、发型、体态…"></textarea></div>
+      <div class="field"><label>服装设定</label><textarea id="fRClothing" style="min-height:56px" placeholder="款式、材质、配饰…"></textarea></div>
+      <div class="field"><label>色彩设定</label><input id="fRColors" type="text" placeholder="例如：朱红 #C0392B / 靛青 #2D6A8F / 米白"></div>
+      <div class="row2">
+        <div class="field"><label>性格</label><input id="fRPersonality" type="text" placeholder="例如：外冷内热"></div>
+        <div class="field"><label>世界观 / 背景</label><input id="fRWorld" type="text" placeholder="例如：民国江南小镇"></div>
+      </div>
+      <div class="field"><label>人物 Prompt（可一键复制）</label><textarea id="fRPrompt" style="min-height:90px" placeholder="身份+年龄+外貌+服装+动作+情绪+环境+光影+风格"></textarea></div>
+      <div class="field"><label>负面提示词（可选）</label><textarea id="fRNegative" style="min-height:52px" placeholder="低质量, 多余手指, 变形…"></textarea></div>
+      <div class="field"><label>备注（可选）</label><textarea id="fRNote" style="min-height:48px"></textarea></div>
+      <div class="field"><label>角色设定图（可多选）</label><input id="fRFiles" type="file" accept="image/*,video/*" multiple><div class="hint-inline">📌 选多张图片（可分几次选）＝每张各建一个独立角色（名字取文件名）；只选一张＝放进当前角色草稿，点保存生效。支持图片/视频，导出 JSON 一起备份</div></div>
+      <div class="role-thumbs" id="fRThumbs"></div>
+    </div>
+    <div class="foot">
+      <button class="btn danger" id="roleDelete" style="display:none;margin-right:auto">删除</button>
+      <button class="btn primary" id="roleSave">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- Link Category Modal（网址分类管理） -->
 <div class="overlay" id="linkCatOverlay" data-page-node-id="x6XRwEOQGopPnqiMJ722m9">
   <div class="modal" style="max-width:360px" data-page-node-id="bU5b9MJpReGzpxvtOktyxB">
@@ -1017,7 +1698,10 @@
       <div class="setting-row"><div class="info"><div class="title">壁纸与背景</div><div class="sub">换背景、上传自己的图、调面板透明度，都在左侧栏「🎨 换背景」里，随时可开。</div></div><div class="actions"><button class="btn" id="sOpenWallpaper" type="button">去换背景</button></div></div>
       <div class="setting-row" data-page-node-id="NTYpzsSzI50fGB3dCHclwy"><div class="info" data-page-node-id="KacNGFKIdvubr8tPa9isq4"><div class="title" data-page-node-id="ud5NaEA7kCbV2OFcEYGzcD">导出提示词</div><div class="sub" data-page-node-id="JnCYZToK6xuUMs9r0tNjo3">备份全部数据为 JSON 文件</div></div><div class="actions" data-page-node-id="ThlGDYNlbJ9x7nBZ0MsXmM"><button class="btn" id="sExport" data-page-node-id="J1EobZrDMr4kjPZrP5DwKo">导出</button></div></div>
       <div class="setting-row" data-page-node-id="CPfGegLEAOHqXAsDSzzQs3"><div class="info" data-page-node-id="NZwHFb2JdbMdemMU5YDVJU"><div class="title" data-page-node-id="mZc434Bo80xVyXWvoZJTnj">导入提示词</div><div class="sub" data-page-node-id="HA1Urv8TAFa2RAS0yBYckI">从 JSON 文件恢复或合并数据</div></div><div class="actions" data-page-node-id="mDdfbBhL1EEGYEqlALCC0J"><button class="btn" id="sImport" data-page-node-id="BV1HAcN5Tg6yWHioSitmxL">导入</button></div></div>
-      <div class="setting-row" data-page-node-id="4yh1IQDKNQUQy7bpTvevE4"><div class="info" data-page-node-id="hFYODuxJPXajOBg8XClWvW"><div class="title" data-page-node-id="OLdSIBHAsiM17c7nl1JxAI">清空数据</div><div class="sub" data-page-node-id="rXDrntEOz9tsuJ76LpySRn">删除当前账号所有提示词、网址收藏与分类</div></div><div class="actions" data-page-node-id="5RTZq794cAu6wHVKXS9Quz"><button class="btn danger" id="sClear" data-page-node-id="PgXkaW6Cwg0IwnQ9Jym1d7">清空</button></div></div>
+      <div class="setting-row"><div class="info"><div class="title">回收站</div><div class="sub">最近删除的提示词在这里，可恢复或彻底删除</div></div><div class="actions"><button class="btn" id="sTrash">打开</button></div></div>
+      <div class="setting-row"><div class="info"><div class="title">存储体检</div><div class="sub">查看占用、找出重复媒体、清理缓存备份</div></div><div class="actions"><button class="btn" id="sHealth">体检</button></div></div>
+      <div class="setting-row"><div class="info"><div class="title">标签管理</div><div class="sub">重命名或批量删除标签（自动同步所有提示词）</div></div><div class="actions"><button class="btn" id="sTagMgr">管理</button></div></div>
+      <div class="setting-row"><div class="info"><div class="title">清空数据</div><div class="sub" data-page-node-id="rXDrntEOz9tsuJ76LpySRn">删除当前账号所有提示词、网址收藏与分类</div></div><div class="actions" data-page-node-id="5RTZq794cAu6wHVKXS9Quz"><button class="btn danger" id="sClear" data-page-node-id="PgXkaW6Cwg0IwnQ9Jym1d7">清空</button></div></div>
       <div class="setting-row" data-page-node-id="FFjVeau3bhGgM5tlDbFze5"><div class="info" data-page-node-id="YLsqqjdBJPN6YVEVL20cdq"><div class="title" data-page-node-id="PyJmMCX2SnUm2j0QjCxNfF">关于</div><div class="sub" data-page-node-id="x258M9C4mSiSztzl1HPzP4">提示词宝库 · 本地版（数据仅存本机，无云端账号）</div></div><div class="actions" data-page-node-id="uKziKSWOgcqTfTOb9HlaV9"></div></div>
     </div>
     <div class="foot" data-page-node-id="1aBsZDAOLQUP4oUNEQ8BUi"><button class="btn primary" id="sClose" data-page-node-id="YfO7mkzIFyjOwTedbRWv66">关闭</button></div>
@@ -1082,7 +1766,7 @@ const DEFAULT_LINK_CATS=["AI工具","设计灵感","学习教程","常用网站"
 // 因为空分类本身不涉及个人内容，还能让新用户一眼看懂这个工具是怎么组织的。
 const SEED=[];
 
-let state={items:[],links:[],linkCats:DEFAULT_LINK_CATS.slice(),linkFilter:"",linkView:"cat",categories:DEFAULT_CATS.slice(),selectedId:null,mode:"all",cat:"",teachers:[],teacherView:"card"};
+let state={items:[],links:[],roles:[],scripts:[],roleFilter:"",linkCats:DEFAULT_LINK_CATS.slice(),linkFilter:"",linkView:"cat",categories:DEFAULT_CATS.slice(),selectedId:null,mode:"all",cat:"",teachers:[],teacherView:"card"};
 let editingId=null,editingCat=null,editTags=[],editingSteps=[],editMode='single';
 let editingLinkId=null,editingLinkCat=null;
 
@@ -1099,7 +1783,78 @@ function loadLocal(){try{return JSON.parse(localStorage.getItem("pvCache")||"nul
 function openDB(){return new Promise((res,rej)=>{try{const r=indexedDB.open("PromptVault",1);r.onupgradeneeded=()=>{r.result.createObjectStore("vault");};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});}
 async function idbGet(){try{const db=await openDB();return await new Promise((res)=>{try{const tx=db.transaction("vault","readonly");const rq=tx.objectStore("vault").get("main");rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);}catch(e){res(null);}});}catch(e){return null;}}
 function idbSet(data){try{openDB().then(db=>{const tx=db.transaction("vault","readwrite");tx.objectStore("vault").put(data,"main");});}catch(e){}}
-function save(){const data={items:state.items,links:state.links,linkCats:state.linkCats,categories:state.categories,teachers:state.teachers};idbSet(data);try{localStorage.setItem("pvCache",JSON.stringify(data));}catch(e){}}
+function save(){const data={items:state.items,links:state.links,roles:state.roles,scripts:state.scripts,linkCats:state.linkCats,categories:state.categories,teachers:state.teachers,trash:state.trash||[]};idbSet(data);try{localStorage.setItem("pvCache",JSON.stringify(data));}catch(e){}}
+const CONTEST_2026_DESIGN=[{"title": "中国大学生计算机设计大赛", "url": "https://jsjds.blcu.edu.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：3–8月（3月底报名、4–5月校赛/省赛、7–8月国赛决赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 1｜承办：计算机学院/北斗学院/设计学院/外国语学院｜可报数媒静态设计、数媒动漫与短片、信息可视化设计等赛道"}, {"title": "蓝桥杯全国软件和信息技术专业人才大赛", "url": "https://dasai.lanqiao.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：10月–次年6月（10–12月报名、4月省赛、6月国赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 3｜承办：计算机学院/机电学院/北斗学院/设计学院/传媒学院｜可报视觉艺术设计赛等设计类赛道"}, {"title": "中国好创意暨全国数字艺术设计大赛", "url": "https://cdec.org.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：3–8月（3月启动、6–7月截稿、8–9月评审公布）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 4｜承办：设计学院/传媒学院/外国语学院｜AIGC/数字艺术/视觉传达方向最对口"}, {"title": "全国大学生广告艺术大赛", "url": "https://sun-ada.net/", "cat": "比赛", "desc": "⏰ 参考赛期：1–6月（3–4月发命题、6月截稿、9–10月公布）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 6｜承办：设计学院/传媒学院｜平面/视频/动画/互动广告均可投稿"}, {"title": "两岸新锐设计竞赛·华灿奖", "url": "https://huacanjiang.com/", "cat": "比赛", "desc": "⏰ 参考赛期：5–10月（5–9月征集、10–11月颁奖）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 8｜承办：设计学院/传媒学院｜视觉设计、数字艺术、IP 形象方向对口"}, {"title": "未来设计师·全国高校数字艺术设计大赛（NCDA）", "url": "https://ncda.org.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：3–7月（3–6月征集、7–8月评审）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 12｜承办：设计学院/传媒学院｜数字媒体艺术专业主流赛事"}, {"title": "米兰设计周-中国高校设计学科师生优秀作品展", "url": "https://milan-awards.com/", "cat": "比赛", "desc": "⏰ 参考赛期：3–6月（3–5月征集、6月评审）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 13｜承办：设计学院/传媒学院｜师生作品展，适合投递课程/毕设作品"}, {"title": "全国大学生数字媒体科技作品及创意竞赛", "url": "https://cmit.com.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：6–11月（6–9月报名与提交、10–11月国赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 19｜承办：设计学院/传媒学院｜数字媒体、短视频、VR/AR 方向对口"}, {"title": "东方设计奖·全国高校创新设计大赛", "url": "https://oda.org.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：4–8月（4–7月征集、8月评审）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 25｜承办：设计学院/传媒学院｜设计类作品均可投，注意分赛项"}, {"title": "全国大学生工业设计大赛", "url": "https://www.bing.com/search?q=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E5%B7%A5%E4%B8%9A%E8%AE%BE%E8%AE%A1%E5%A4%A7%E8%B5%9B%20%E5%AE%98%E7%BD%91", "cat": "比赛", "desc": "⏰ 参考赛期：4–7月（4–5月征集、6–7月评审）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 48｜承办：设计学院｜偏产品设计，可跨专业组队；官网待核实，链接为搜索页"}, {"title": "全国三维数字化创新设计大赛", "url": "https://3dds.3ddl.net/", "cat": "比赛", "desc": "⏰ 参考赛期：3–12月（4月起报名、3–6月省赛/初赛、12月国赛总决赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 49｜承办：设计学院｜3D/数字人居/数字文化设计赛项对口"}, {"title": "全国大学生花园设计建造竞赛", "url": "https://www.bing.com/search?q=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E8%8A%B1%E5%9B%AD%E8%AE%BE%E8%AE%A1%E5%BB%BA%E9%80%A0%E7%AB%9E%E8%B5%9B%20%E5%AE%98%E7%BD%91", "cat": "比赛", "desc": "⏰ 参考赛期：4–6月（4–5月征集与制作、6月评选）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 50｜承办：设计学院｜偏景观/空间设计，需组队；官网待核实，链接为搜索页"}, {"title": "红点奖（Red Dot）", "url": "https://www.red-dot.org/", "cat": "比赛", "desc": "⏰ 参考赛期：1–5月（概念奖早鸟1–2月、常规3–4月、追加5月）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 51｜承办：设计学院｜投「设计概念奖」学生组，需自付报名费，注意资格"}, {"title": "德国 iF 设计奖", "url": "https://www.ifdesign.com/", "cat": "比赛", "desc": "⏰ 参考赛期：2–6月（iF Design Talent Award 学生组通常2–6月）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 学校2026立项序号 52｜承办：设计学院｜投学生组 Talent Award，需自付报名费，注意资格"}];
+
+// 第41批（2026-11-12）：补充「双创类」7 项 + 「影视新媒体类」7 项。
+// 上一批只收了承办单位含设计学院的 14 项，这 14 项承办单位在创新创业学院/团委/商学院/传媒学院。
+const CONTEST_2026_EXTRA=[{"title": "中国国际大学生创新大赛（原「互联网+」）", "url": "https://cy.ncss.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：4–10月（4–6月校赛/省赛报名、7–9月省赛、10月国赛总决赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 双创类｜学校2026立项序号 108｜承办：创新创业学院｜学校A类重要赛事；全校不限专业组队，适合做 AIGC／文创／非遗数字化项目，报名走全国大学生创业服务网"}, {"title": "「挑战杯」中国大学生创业计划大赛", "url": "https://www.tiaozhanbei.net/", "cat": "比赛", "desc": "⏰ 参考赛期：3–11月（3–5月校赛、6–8月省赛、9–11月国赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 双创类｜学校2026立项序号 110｜承办：团委｜学校A类重要赛事；组队做创业计划书，设计类学生常负责产品原型与视觉"}, {"title": "全国大学生职业规划大赛", "url": "https://zgs.chsi.com.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：9–次年4月（9–11月校赛、12–3月省赛、4月国赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 双创类｜学校2026立项序号 109｜承办：创新创业学院｜学校A类重要赛事；个人赛，分成长／就业赛道，作品含生涯发展报告与展示"}, {"title": "全国大学生电子商务「创新、创意及创业」挑战赛（三创赛）", "url": "https://www.3chuang.net/", "cat": "比赛", "desc": "⏰ 参考赛期：3–8月（3–4月报名、5–6月校赛省赛、7–8月国赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 双创类｜学校2026立项序号 92｜承办：商学院｜学校A类重要赛事；跨境电商／直播／视觉营销等赛道需要设计能力"}, {"title": "iCAN大学生创新创业大赛", "url": "https://www.g-ican.com/", "cat": "比赛", "desc": "⏰ 参考赛期：4–11月（4–6月报名、7–9月分赛区、10–11月国赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 双创类｜学校2026立项序号 5｜承办：北斗学院/外国语学院/商学院/会计学院｜偏创新项目与产品原型，可跨专业组队"}, {"title": "「学创杯」全国大学生创业综合模拟大赛", "url": "https://www.bing.com/search?q=%E5%AD%A6%E5%88%9B%E6%9D%AF%20%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E5%88%9B%E4%B8%9A%E7%BB%BC%E5%90%88%E6%A8%A1%E6%8B%9F%E5%A4%A7%E8%B5%9B%20%E5%AE%98%E7%BD%91%20%E6%8A%A5%E5%90%8D", "cat": "比赛", "desc": "⏰ 参考赛期：3–10月（3–5月校赛、6–9月省赛、10月国赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 双创类｜学校2026立项序号 20｜承办：会计学院/商学院｜偏创业模拟经营，需组队；官网待核实，链接为搜索页"}, {"title": "全国高校商业精英挑战赛", "url": "https://www.cubec.org.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：3–11月（各赛道分3–6月报名、7–11月竞赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 双创类｜学校2026立项序号 2｜承办：会计学院/商学院/外国语学院｜学校A类重要赛事；含品牌策划／会展创新创业／创新创业竞赛等赛道，设计岗可对口"}, {"title": "中国大学生广告艺术节学院奖", "url": "https://www.5iidea.com/", "cat": "比赛", "desc": "⏰ 参考赛期：3–12月（春季3–6月、秋季8–12月两季征集）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 影视新媒体类｜学校2026立项序号 54｜承办：传媒学院｜平面／影视／短视频／文案均可投，命题多、获奖面大"}, {"title": "湖北大学生新闻传播教育创新实践技能竞赛", "url": "https://www.bing.com/search?q=%E6%B9%96%E5%8C%97%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%96%B0%E9%97%BB%E4%BC%A0%E6%92%AD%E6%95%99%E8%82%B2%E5%88%9B%E6%96%B0%E5%AE%9E%E8%B7%B5%E6%8A%80%E8%83%BD%E7%AB%9E%E8%B5%9B%20%E5%AE%98%E7%BD%91%20%E6%8A%A5%E5%90%8D", "cat": "比赛", "desc": "⏰ 参考赛期：9–11月（9–10月报名提交、11月评审）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 影视新媒体类｜学校2026立项序号 55｜承办：传媒学院｜省级赛事，含短视频／融媒体作品类；官网待核实，链接为搜索页"}, {"title": "「知行杯」全国大学生新媒体大赛", "url": "https://www.bing.com/search?q=%E7%9F%A5%E8%A1%8C%E6%9D%AF%20%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%96%B0%E5%AA%92%E4%BD%93%E5%A4%A7%E8%B5%9B%20%E5%AE%98%E7%BD%91%20%E6%8A%A5%E5%90%8D", "cat": "比赛", "desc": "⏰ 参考赛期：5–10月（5–8月征集、9–10月评审）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 影视新媒体类｜学校2026立项序号 56｜承办：传媒学院｜新媒体内容与视觉作品方向；官网待核实，链接为搜索页"}, {"title": "全国大学生新媒体创新创意大赛", "url": "https://www.bing.com/search?q=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E6%96%B0%E5%AA%92%E4%BD%93%E5%88%9B%E6%96%B0%E5%88%9B%E6%84%8F%E5%A4%A7%E8%B5%9B%20%E5%AE%98%E7%BD%91%20%E6%8A%A5%E5%90%8D", "cat": "比赛", "desc": "⏰ 参考赛期：6–11月（6–9月征集、10–11月评审）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 影视新媒体类｜学校2026立项序号 57｜承办：传媒学院｜通知记为第九届；短视频／新媒体设计方向；官网待核实，链接为搜索页"}, {"title": "中国国际动漫节声优大赛", "url": "https://cicaf.hzxcw.gov.cn/", "cat": "比赛", "desc": "⏰ 参考赛期：3–5月（3–4月报名、4–5月动漫节期间决赛）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 影视新媒体类｜学校2026立项序号 58｜承办：传媒学院｜配音／声音表演方向，走中国国际动漫节官网"}, {"title": "全国大学生讲解大会", "url": "https://www.bing.com/search?q=%E5%85%A8%E5%9B%BD%E5%A4%A7%E5%AD%A6%E7%94%9F%E8%AE%B2%E8%A7%A3%E5%A4%A7%E4%BC%9A%20%E5%AE%98%E7%BD%91%20%E6%8A%A5%E5%90%8D", "cat": "比赛", "desc": "⏰ 参考赛期：5–9月（5–7月选拔、8–9月大会）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 影视新媒体类｜学校2026立项序号 59｜承办：传媒学院｜讲解／主持／表达类；官网待核实，链接为搜索页"}, {"title": "大别山大学生微电影节·鸡公山限时创作邀请赛", "url": "https://www.bing.com/search?q=%E5%A4%A7%E5%88%AB%E5%B1%B1%E5%A4%A7%E5%AD%A6%E7%94%9F%E5%BE%AE%E7%94%B5%E5%BD%B1%E8%8A%82%20%E9%B8%A1%E5%85%AC%E5%B1%B1%E9%99%90%E6%97%B6%E5%88%9B%E4%BD%9C%20%E5%AE%98%E7%BD%91%20%E6%8A%A5%E5%90%8D", "cat": "比赛", "desc": "⏰ 参考赛期：6–10月（6–8月限时创作、9–10月展评）｜按往年常规整理，非通知原文，以官网当年通知为准\n📌 影视新媒体类｜学校2026立项序号 60｜承办：传媒学院｜短片创作方向，最对口数媒专业；官网待核实，链接为搜索页"}];
+
+// 第40批（2026-11-12）：把学校《2026年度学科竞赛项目一览表》里
+// 承办单位含「设计学院」的 14 项赛事录进网址收藏，只增不删、按标题/官网去重。
+// 来源：武晴教字〔2026〕37号 附件（8页扫描件，人工逐行核对）。
+function importContest2026(){
+  const titles=new Set(state.links.map(l=>String(l.title||"").trim()));
+  const hosts=new Set(state.links.map(l=>{
+    try{return new URL(String(l.url||"").startsWith("http")?l.url:"https://"+l.url).hostname;}catch(e){return "";}
+  }).filter(Boolean));
+  let added=0;
+  CONTEST_2026_DESIGN.concat(CONTEST_2026_EXTRA).forEach(c=>{
+    if(titles.has(c.title))return;                 // 已收藏同名赛事 → 跳过
+    let host="";
+    try{host=new URL(c.url).hostname;}catch(e){}
+    const isSearch=/bing\.com|baidu\.com|google\.com/.test(host);
+    if(host&&!isSearch&&hosts.has(host))return;   // 已收藏同一官网 → 跳过（搜索页不参与域名去重）
+    state.links.push({id:uid(),title:c.title,url:c.url,cat:"比赛",
+      desc:c.desc,icon:"",createdAt:Date.now(),pvBatch:"2026-design"});
+    titles.add(c.title); if(host)hosts.add(host); added++;
+  });
+  if(!state.linkCats.includes("比赛"))state.linkCats.push("比赛");
+  return added;
+}
+// 第42批（2026-11-12）：清理「比赛」分类里重复的赛事网址。
+// 只处理本次录入的 28 项（标题在白名单里，或备注带「学校2026立项序号」），
+// 用户自己存的任何网址一律不碰 —— 这是为了保证去重不会误删手工收藏。
+// 重复判据：标题完全相同，或归一化后的官网域名相同（搜索页不参与域名判重）。
+// 每组保留「信息最全」的一条（优先带 ⏰ 参考赛期，其次备注更长）。
+function dedupeLinks2026(){
+  const known=new Set(CONTEST_2026_DESIGN.concat(CONTEST_2026_EXTRA).map(c=>String(c.title||"").trim()));
+  const isBatch=l=>known.has(String(l.title||"").trim())||/学校2026立项序号/.test(String(l.desc||""));
+  const hostOf=l=>{
+    try{
+      const u=String(l.url||"");
+      const h=new URL(u.startsWith("http")?u:"https://"+u).hostname.toLowerCase().replace(/^www\./,"");
+      return /bing\.com|baidu\.com|google\.com/.test(h)?"":h;
+    }catch(e){return "";}
+  };
+  const score=l=>(String(l.desc||"").includes("⏰ 参考赛期")?100000:0)+String(l.desc||"").length;
+  const idx=[];
+  state.links.forEach((l,i)=>{if(isBatch(l))idx.push(i);});
+  if(idx.length<2)return 0;
+
+  // 并查集：标题相同 / 官网相同 → 归为同一组
+  const parent=idx.map((_,k)=>k);
+  const find=k=>{while(parent[k]!==k){parent[k]=parent[parent[k]];k=parent[k];}return k;};
+  const uni=(a,b)=>{a=find(a);b=find(b);if(a!==b)parent[b]=a;};
+  const byTitle=new Map(),byHost=new Map();
+  idx.forEach((i,k)=>{
+    const t=String(state.links[i].title||"").trim();
+    if(byTitle.has(t))uni(k,byTitle.get(t));else byTitle.set(t,k);
+    const h=hostOf(state.links[i]);
+    if(h){if(byHost.has(h))uni(k,byHost.get(h));else byHost.set(h,k);}
+  });
+  const keep=new Map();
+  idx.forEach((i,k)=>{
+    const r=find(k);
+    if(!keep.has(r)||score(state.links[i])>score(state.links[keep.get(r)]))keep.set(r,i);
+  });
+  const keepSet=new Set([...keep.values()]);
+  const drop=new Set(idx.filter(i=>!keepSet.has(i)));
+  if(!drop.size)return 0;
+  state.links=state.links.filter((_,i)=>!drop.has(i));
+  return drop.size;
+}
+
 async function loadVault(){
   let v=await idbGet();
   if(!v){ v=loadLocal(); } // 迁移旧版 localStorage 数据一次
@@ -1117,6 +1872,12 @@ async function loadVault(){
   state.linkCats=(v&&Array.isArray(v.linkCats)&&v.linkCats.length)?v.linkCats:DEFAULT_LINK_CATS.slice();
   // 指导老师：旧存档没有这个字段 → 空数组（不影响其他数据）
   state.teachers=(v&&Array.isArray(v.teachers))?v.teachers:[];
+  state.roles=(v&&Array.isArray(v.roles))?v.roles:[];
+  state.scripts=(v&&Array.isArray(v.scripts))?v.scripts:[];
+  // 回收站（2026-11-05 从 MISTY 移植）：旧存档没有这个字段 → 空数组
+  state.trash=(v&&Array.isArray(v.trash))?v.trash:[];
+  importContest2026();
+  const dupRemoved=dedupeLinks2026();
   // 比赛等级：老条目没有 level 字段 → 在「比赛」类里按规则认一次（认不出就留空，不硬塞）
   state.links.forEach(l=>{
     if(l.level)return;
@@ -1126,6 +1887,7 @@ async function loadVault(){
   });
   save();
   renderAll();
+  if(dupRemoved)setTimeout(()=>{try{toast("已自动清理 "+dupRemoved+" 条重复的比赛网址");}catch(e){}},800);
 }
 
 // ---------- filtering ----------
@@ -1141,7 +1903,7 @@ function filtered(){
     return true;
   }).sort((a,b)=>b.createdAt-a.createdAt);
 }
-function titleByMode(){if(state.cat)return state.cat;return ({all:"全部提示词",fav:"收藏",recent:"最近添加",shortcuts:"快捷",links:"网址收藏",teachers:"指导老师",settings:""})[state.mode]||"全部提示词";}
+function titleByMode(){if(state.cat)return state.cat;if(state.mode==="roles")return "角色仓库";if(state.mode==="scripts")return "剧本笔记";return ({all:"全部提示词",fav:"收藏",recent:"最近添加",shortcuts:"快捷",links:"网址收藏",teachers:"指导老师",settings:""})[state.mode]||"全部提示词";}
 
 // ---------- rendering ----------
 function renderSidebar(){
@@ -1150,6 +1912,8 @@ function renderSidebar(){
   document.getElementById("navRecent").textContent=state.items.filter(i=>Date.now()-i.createdAt<7*24*60*60*1000).length;
   document.getElementById("navShort").textContent=state.items.filter(i=>(i.tags||[]).includes("快捷")).length;
   document.getElementById("navLinks").textContent=state.links.length;
+  const nr=document.getElementById("navRoles"); if(nr)nr.textContent=state.roles.length;
+  const nS=document.getElementById("navScripts"); if(nS)nS.textContent=state.scripts.length;
   const nT=document.getElementById("navTeachers");
   if(nT) nT.textContent=state.teachers.length;
   document.querySelectorAll(".nav-item").forEach(el=>el.classList.toggle("active",state.mode===el.dataset.mode));
@@ -1159,6 +1923,22 @@ function renderCenter(){
   const grid=document.getElementById("grid"),empty=document.getElementById("empty");
   const linksView=document.getElementById("linksView");
   const teachersView=document.getElementById("teachersView");
+  const rolesView=document.getElementById("rolesView");
+  const scriptsView=document.getElementById("scriptsView");
+  scriptsView.style.display="none";
+  rolesView.style.display="none";
+  // 剧本笔记模式（第44批）
+  if(state.mode==="scripts"){
+    grid.style.display="none";empty.style.display="none";linksView.style.display="none";teachersView.style.display="none";rolesView.style.display="none";
+    scriptsView.style.display="block";
+    setBtnAddLabel("新建剧本");renderScripts();return;
+  }
+  // 角色仓库模式（第43批）
+  if(state.mode==="roles"){
+    grid.style.display="none";empty.style.display="none";linksView.style.display="none";teachersView.style.display="none";
+    rolesView.style.display="block";
+    setBtnAddLabel("添加角色");renderRoles();return;
+  }
   // 指导老师模式：隐藏提示词网格与网址视图，渲染老师卡片
   if(state.mode==="teachers"){
     grid.style.display="none";empty.style.display="none";linksView.style.display="none";
@@ -1186,15 +1966,24 @@ function renderCenter(){
     const thumb=i.media&&i.media[0]?i.media[0].dataURL:"";
     const isVideo=i.media&&i.media[0]&&i.media[0].type.startsWith("video");
     const hasMedia=!!thumb;
-    const mediaHtml=thumb?(isVideo?`<video src="${thumb}" muted></video>`:`<img src="${thumb}" alt="">`):`<span class="empty">暂无媒体</span>`;
-    return`<div class="card" data-id="${i.id}"><button class="del" data-del="${i.id}" title="删除">🗑</button><button class="edit" data-edit="${i.id}" title="编辑">✎</button><button class="star ${i.favorite?'on':''}" data-star="${i.id}" title="收藏">${i.favorite?'★':'☆'}</button><div class="media" data-id="${i.id}" ${hasMedia?'data-has-media="1"':''}>${mediaHtml}</div><div class="body"><div class="cat">${esc(i.category||"未分类")}</div><h3>${esc(i.title)}</h3><div class="tags">${(i.tags||[]).slice(0,3).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}</div></div></div>`;
+    const mediaHtml=thumb?(isVideo?`<video src="${thumb}" muted></video>`:`<img src="${thumb}" alt="">`):""; // 第35批：无图不再渲染占位，标题直接顶到卡片上部
+    return`<div class="card${hasMedia?"":" no-media"}" data-id="${i.id}"><button class="del" data-del="${i.id}" title="删除">🗑</button><button class="edit" data-edit="${i.id}" title="编辑">✎</button><button class="star ${i.favorite?'on':''}" data-star="${i.id}" title="收藏">${i.favorite?'★':'☆'}</button>${hasMedia?`<div class="media" data-id="${i.id}" data-has-media="1">${mediaHtml}</div>`:""}<div class="body"><div class="cat">${esc(i.category||"未分类")}</div><h3>${esc(i.title)}${(()=>{
+      // 含 {{变量}} 的条目给出「可填空 N」提示，一眼看出哪些需要每次替换
+      const _t=[i.content||""].concat((i.steps||[]).map(x=>x.content||"")).join(" ");
+      const _v=tplVars(_t);
+      return _v.length?`<span class="var-badge">🧩 ${_v.length}</span>`:"";
+    })()}${(()=>{
+      // 有历史版本的给出数量提示
+      const _n=(i.versions||[]).length;
+      return _n?`<span class="var-badge" title="有 ${_n} 个历史版本">🕘 ${_n}</span>`:"";
+    })()}</h3><div class="tags">${(i.tags||[]).slice(0,3).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}</div></div></div>`;
   }).join("");
 }
 let detailStepIdx=-1; // -1=主提示词, 0+=steps 索引
 
 function renderDetail(){
   const it=find(state.selectedId),empty=document.getElementById("detailEmpty"),content=document.getElementById("detailContent");
-  if(!it||state.mode==="links"||state.mode==="teachers"){empty.style.display="flex";content.style.display="none";return;}
+  if(!it||state.mode==="links"||state.mode==="teachers"||state.mode==="roles"||state.mode==="scripts"){empty.style.display="flex";content.style.display="none";return;}
   empty.style.display="none";content.style.display="flex";
   document.getElementById("dCat").textContent=it.category||"未分类";
   const list=filtered(),idx=list.findIndex(i=>i.id===it.id);
@@ -1204,12 +1993,350 @@ function renderDetail(){
   document.getElementById("dContent").textContent=it.content||"";
   document.getElementById("dContent").style.display=hasSteps?"none":"block";
   document.getElementById("dDesc").textContent=it.desc||"";
+  reflowDetailDesc(!!(it.media&&it.media.length));
   document.getElementById("dTags").innerHTML=(it.tags||[]).map(t=>`<span class="tag">#${esc(t)}</span>`).join("");
   const star=document.getElementById("dStar");star.classList.toggle("on",it.favorite);star.textContent=it.favorite?'★':'☆';
   document.getElementById("dMedias").innerHTML=(it.media||[]).map((m,idx)=>`<div class="media-item" data-idx="${idx}">${m.type.startsWith("video")?`<video src="${m.dataURL}" preload="metadata" muted playsinline></video>`:`<img src="${m.dataURL}" alt="">`}<button class="del" data-del-media="${idx}" title="删除">×</button></div>`).join("");
   renderPreview(it);
   renderDetailSteps(it,hasSteps);
+  // 最后一步：按可用高度给正文定字号（无图时放大撑满，有图时保持 13px）
+  requestAnimationFrame(fitDetailFont);
 }
+
+/* 窗口/详情栏尺寸变了，字号也要跟着重算（节流一下，拖窗口时不卡） */
+let _fitT=null;
+function scheduleFitDetailFont(){
+  if(_fitT) clearTimeout(_fitT);
+  _fitT=setTimeout(()=>{ _fitT=null; try{ fitDetailFont(); }catch(e){} },120);
+}
+window.addEventListener("resize",scheduleFitDetailFont);
+
+/* ============================================================
+   正文「字体撑满」—— 短内容自动放大字号
+   ------------------------------------------------------------
+   用户反馈：没图片时正文该把整块地方用起来，别只占上面一小条。
+   做法：无图 + 单条提示词 + 内容本身不需要滚动时，
+        从 13px 起一档档试，加到「刚好填满可视高度」为止（上限 22px）。
+   注意三点：
+     ① 只调 .content，分步模式（.steps-body）不调 —— 分步内容通常很短，
+        放大会显得像标题，反而怪。
+     ② 有图时不放大：预览区要占地方，正文该让位。
+     ③ 放大后若出现滚动条说明放过头了，立刻回退一档。
+   ============================================================ */
+/* 字号区间（2026-11-01 定档）
+   13px = 默认，长文就用它；上限按内容多少动态给：
+     极短（一句话，fill<20%）  → 最高 20px，字大一点才撑得住版面
+     常规（几条，20%~65%）     → 最高 18px，接近填满但不显得像标题
+     本来就长（>65%）          → 不放大，13px 读着最舒服
+   实测依据：21.5px 时 3 段文字像标题、每行字太少反而难读，所以留了天花板。 */
+/* ⚠️ 2026-11-01 返工：上限 24px 被撤掉了。
+   用户实测 860px 宽详情栏 feedback：「还是没有铺满」——
+   24px 下文字只占正文框的 42%，下半截仍然空着。
+   既然「有图才压缩、没图要铺满」是硬要求，就不该人为替用户决定字号上限，
+   该由「放不放得下」自己算：能撑多满就撑多满。
+   32px 是个保险丝（再大就真要变成标题了），实际几乎碰不到——
+   因为正文框宽度有限，字放大到一定程度就会换行、行数暴增，二分自然收敛。 */
+/* 上限调到 48px（2026-11-01 第 17 版）：32px 在 860px 宽的详情栏里仍嫌小 ——
+   实测「中等内容」只填到正文框的 75%，框底还空一截。
+   既然需求是「无图就铺满」，就不该由我替用户判断多大算过分；
+   48px 只是防止极端情况下算飞（内容极少时字会非常大，但那本来就该大）。
+   真正的边界交给「放不放得下」：字越大换行越多，高度涨得快，二分自然收敛。 */
+const DET_FONT_MIN=13, DET_FONT_STEP=0.5, DET_FONT_MAX=20;
+/* 短内容的字号封顶（2026-11-01 第 22 版）：46px。
+   为什么不是 48（全局上限）？——「一句话提示词」本来就该读起来舒服，
+   46 和 48 的差别微小，但把封顶定死，短内容就不会在「再大一点」上死磕，
+   而是转去走「居中用满」的路线（见 CSS 里的 .content-fill）。 */
+const DET_FONT_SHORT_MAX=20;
+
+/* ============================================================
+   详情正文「字体占满」—— 2026-11-01 重写版
+   ------------------------------------------------------------
+   前两版都不行，原因记在这里，别再踩：
+
+   ① 用 el.scrollHeight 判断 → 在 flex:1 容器里永远等于容器高，判据恒成立。
+   ② 用 Range.getClientRects() 量高度 → 浏览器会把连续文本行合并成一个矩形，
+      中间空行不计入，量出来是阶跃值（15px 和 20px 都报 595px），二分在上面跑会卡死。
+   ③ 人为把上限压到 18px → 实测 20px 只占 78%、23px 占 90%，并不会「像标题」，
+      真正的上限该由「放不放得下」决定。
+
+   本版做法：
+     · 克隆测量：复制同款隐藏节点，宽度＝正文内宽，读 scrollHeight（真实排版值）
+     · 上限 30px，二分找「刚好放得下的最大字号」
+     · 只放大 .content（单条提示词）；分步 / 有图 一律 13px
+   ============================================================ */
+
+/* 造一个测量用的隐藏节点，严格跟随正文的字体族 / 行高倍数 / 换行规则。
+   ⚠️ 关键点（踩过坑）：
+     line-height 用「倍数」而不是 getComputedStyle 拿到的像素值 ——
+     因为正文的 line-height 是 1.7（相对字号），一旦换成固定 px，
+     测量节点在字号变化时行高不跟着变，量出来会是阶跃假值。
+     box-sizing 必须显式给 content-box，宽度就是文字真正能用的宽度。 */
+let _fitProbe=null;
+function getFitProbe(el){
+  if(!_fitProbe||!_fitProbe.parentNode){
+    _fitProbe=document.createElement("div");
+    _fitProbe.setAttribute("aria-hidden","true");
+    document.body.appendChild(_fitProbe);
+  }
+  const cs=getComputedStyle(el);
+  _fitProbe.style.cssText=
+    "position:absolute;left:-99999px;top:0;visibility:hidden;pointer-events:none;"+
+    "padding:0;margin:0;border:0;overflow:visible;box-sizing:content-box;"+
+    "white-space:pre-wrap;word-break:break-word;"+
+    "font-family:"+cs.fontFamily+";"+
+    "font-weight:"+cs.fontWeight+";"+
+    "letter-spacing:"+cs.letterSpacing+";"+
+    "line-height:1.7;";   // 与 .detail .content 的 line-height 保持一致
+  return _fitProbe;
+}
+
+/* 在给定字号下，这段文字排出来有多高（真实排版值，不是估算） */
+function measureAt(el, text, size, width){
+  const p=getFitProbe(el);
+  p.style.width=width+"px";
+  p.style.fontSize=size+"px";
+  p.textContent=text;
+  // 读 scrollHeight 前强制一次布局，避免拿到上一轮的缓存值
+  void p.offsetHeight;
+  return p.scrollHeight;
+}
+
+function fitDetailFont(){
+  const wrap=document.getElementById("detailContent");
+  const el=document.getElementById("dContent");
+  const scroll=document.getElementById("dtScroll");
+  if(!wrap||!el||!scroll) return;
+
+  el.style.fontSize="";
+  const stepsEl=document.getElementById("dSteps");
+  const stepsOn=stepsEl && getComputedStyle(stepsEl).display!=="none";
+  const hasMedia=!wrap.classList.contains("no-media");
+  // 有图 / 分步 / 正文隐藏 → 一律默认字号
+  if(hasMedia||stepsOn||getComputedStyle(el).display==="none") return;
+
+  const text=el.textContent||"";
+  if(!text.trim()) return;
+
+  // 正文内宽（去掉左右 padding）
+  const cs=getComputedStyle(el);
+  const innerW=el.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0);
+  if(innerW<80) return;
+
+  // 正文能用多高 = 滚动区可视高 − 顶栏 − 标题 − 标签 − 说明 − 上传条 − body 上下 padding
+  let used=0;
+  const headEl=document.querySelector("#detailContent .head");
+  if(headEl) used+=headEl.getBoundingClientRect().height;
+  ["dTitle","dTags","dDesc","dropzone"].forEach(id=>{
+    const n=document.getElementById(id);
+    if(n && getComputedStyle(n).display!=="none") used+=n.getBoundingClientRect().height;
+  });
+  const bodyEl=document.querySelector("#detailContent .body");
+  let bodyPad=0;
+  if(bodyEl){
+    const bs=getComputedStyle(bodyEl);
+    bodyPad=(parseFloat(bs.paddingTop)||0)+(parseFloat(bs.paddingBottom)||0);
+  }
+  // 余量只留「边框 2px + 亚像素误差」。
+  // ⚠️ 原来这里写的是 14+2+8=24px：那 14px 是正文的 margin-bottom，
+  //    但 CSS 里 #detailContent .body > .content:last-of-type{margin-bottom:0}
+  //    早就把它清掉了，于是这 14px 变成了「白留的空」——
+  //    正文框永远比可用区矮一截，正是用户说的「还是折叠着」的一部分。
+  const extra=2+4;
+  /* ⚠️ 还要扣掉正文框自己的上下内边距 + 边框：
+     克隆测量节点是 box-sizing:content-box，量出来的是**纯文字高度**，
+     而真正占位的是「padding-top + 文字 + padding-bottom + 边框」。
+     不扣这一块，量出来 738 够、实际占 768，落点必然超出 20~30px，
+     用户看到的就是「框底还空一截」或者「莫名多出一条滚动」。
+     （实测 1400 窗口：room 755 时文字 738，加上 14+14+2 就是 768 > 755） */
+  const elCs=getComputedStyle(el);
+  const elBox=(parseFloat(elCs.paddingTop)||0)+(parseFloat(elCs.paddingBottom)||0)
+             +(parseFloat(elCs.borderTopWidth)||0)+(parseFloat(elCs.borderBottomWidth)||0);
+  const room=scroll.clientHeight-used-bodyPad-extra-elBox;
+  if(room<60) return;
+
+  /* 「一屏」到底有多高（整条 .dt-scroll 的可视高度）。
+     它有两个用途，都和上面那个 room 不同，别混：
+       · room  = 扣掉顶栏/标题/上传条后，**第一屏里真正留给正文**的高度
+       · screen= 整块可视高度，用来算「滚动总高度相当于几屏」 */
+  const screen=scroll.clientHeight;
+  /* 长文判定的阈值（2026-11-01 第 21 版新增）
+     DET_FILL  ：正文填满可用区的比例，到这个程度才算「铺满」。
+                 留 12% 是给折行取整的余量，肉眼已是满满一屏。
+     DET_MAXSC：滚动总高最多相当于几屏。超过就说明字号已经大得离谱
+                 （比如 2 个字的内容被撑到 48px），必须收回来。 */
+  const DET_FILL=0.88, DET_MAXSC=2.6;
+  void DET_FILL; void DET_MAXSC;
+
+  /* ⚠️⚠️ 2026-11-01 第 20 版补充：room 现在只是「一屏能放多少字」的参考值，
+     不再决定正文框高度（框高度 = 文字高度，见上面的 CSS）。
+     它的唯一用途：告诉 fitDetailFont「在这个宽度下，字号放大到什么程度就该停了」。
+     之前把 room 当硬边界用，导致 ①~⑩ 那种内容被判为「13px 都放不下」，
+     字号一路卡在最小档 —— 那正是「上面一点小字、下面大片空」的来源。
+
+     历史注释（第 18 版）：这里原来有一句「13px 都放不下 → 直接用 13px 收工」，
+     正是用户连着两次说「还是折叠在那上面一点，下面那么大空位不填满」的**直接原因**。
+
+     实测（540×1080，详情栏占满，一条 ①~⑩ 的长提示词）：
+       13px 下文字高 928px，而可用区只有 830px  →  判为「放不下」→ 直接定格 13px
+       可同时正文框被 flex 拉到 958px（比 928 还高），**框比字高** →
+       用户看到的正是「上面一坨小字 + 下面空一大片」，框底还有条滚动条。
+
+     用户的诉求很清楚：**宁可滚动，也要撑满**。
+     所以这里不再提前放弃 —— 统一交给下面的逼近循环：
+       放不下就一档档往小退，直到放得下（下限 13px），然后按这个字号撑满；
+       全程不出现「因为放不下就干脆保持最小字号」这种偷懒分支。 */
+
+  // ── 二分先找一个「放得下」的起点 ──────────────────────────────
+  // 给测量值留 3px 安全余量：真实渲染有亚像素累积，卡得刚好反而会多出一条滚动。
+  const fitting=(sz)=>measureAt(el,text,sz,innerW)+elBox+3<=room;
+  let lo=DET_FONT_MIN, hi=DET_FONT_MAX;
+  if(fitting(hi)){ lo=hi; }
+  else if(!fitting(DET_FONT_MIN)){
+    // 连最小字号都放不下 → 先从最小字号起步，让逼近循环去「找最大放得下的」
+    // （以前这里会直接 return 保持 13px 不放大，现在不这么干了）
+    lo=DET_FONT_MIN;
+  }
+  else{
+    let guard=0;
+    while(hi-lo>DET_FONT_STEP && guard++<20){
+      const mid=(lo+hi)/2;
+      if(fitting(mid)) lo=mid; else hi=mid;
+    }
+  }
+  let finalSize=Math.floor(lo*2)/2;
+
+  /* ── 「逼近式」落地微调（2026-11-01 返工补的，这段才是关键）──────
+     ⚠️ 踩过的坑：只靠二分 + 3px 余量，落点常常「差一口气」。
+        实测 1400 窗口 / 中等内容：二分定在 29.5px，文字只占正文框 75%，
+        框底还剩 52px 白 —— 用户看到的就是「还是没铺满」。
+        原因是测量值和真实渲染有偏差（字体回退、字距取整、换行点不同），
+        留余量的方向又只会「更保守」，于是永远差一点。
+     正确做法：二分只负责给个不溢出的起点，真正定稿靠这个循环 ——
+       放得下就 +0.5 继续加，溢出了就回退一格并停。最多 40 次，不会死循环。
+     ---------------------------------------------------------------- */
+  /* 溢出判据：直接拿「正文框自然发布出来的高度」跟 room 比。
+     ⚠️ 不要再用 scroll.scrollHeight > scroll.clientHeight —— 测量态下一旦
+        某个祖先被撑开，clientHeight 会跟着长，判据就假了（第 19 版踩到）。
+     正文框要比的是「内容高度 + 它自己的 padding/border」，
+     因为 room 里已经扣过 elBox，两边口径必须一致。 */
+  const apply   = (sz)=>{ el.style.fontSize = sz>DET_FONT_MIN ? sz+"px" : ""; void el.offsetHeight; };
+  const contentBoxH = () => el.getBoundingClientRect().height;   // .content 是 border-box，含 padding+border
+  /* ══════════════════════════════════════════════════════════════
+     溢出判据（2026-11-01 第 21 版，真·定稿）
+     --------------------------------------------------------------
+     以前：`contentBoxH() <= room` —— 只问「一屏放不放得下」。
+           于是 ①~⑩ 那种超过一屏的内容，从最大字号一路退到 13px，
+           框里不溢出了，但满屏都是小字 → 用户看到的正是
+           「上面一点小字、下面那么大空位不填满」（连着骂了四轮）。
+
+     现在：分两种内容区别对待，这才是「铺满」的正确含义 ——
+
+       ① 一屏放得下（短/中等内容）
+          要求：正文既不能超出 room（否则第一屏看不全），
+                又要真的把这个 room 填满（≥88%）。
+          退字号只会让它更不满，所以这里只往上加。
+
+       ② 一屏放不下（长内容，如 ①~⑩ 十条）
+          要求：正文总高度必须达到**第一屏的 88%**
+                （= 用户一打开，视线所及之处全是字，没有任何空地），
+                同时整页滚动总量不超过 2.6 屏（防字号失控）。
+
+     换句话说：判据从「别溢出」翻转成「必须填够」。
+     长内容宁可整页滚，也绝不允许上面小字下面空地 —— 这就是用户的原话。 */
+  const fitFull = () => {
+    const h = contentBoxH();                       // 正文真实占高（border-box）
+    const totalTop = screen - scroll.clientHeight; // 恒为 0，保留可读性
+    void totalTop;
+    const pageH = h + used + bodyPad + elBox;      // 整页内容高度 ≈ 正文 + 其他占位
+    const pages = pageH / screen;                  // 相当于几屏
+    if (h <= room + 0.5 && h >= room * DET_FILL) return true;   // 情形①：一屏内且填满
+    if (h > room + 0.5) return pages <= DET_MAXSC;              // 情形②：超一屏，只要总屏数可控
+    /* 情形③（2026-11-01 第 22 版补）：一屏内但填不满。
+       内容少到「怎么放大都铺不满」时，不能无限加 —— 否则一屏两三个字，
+       变成海报。加到 DET_FONT_SHORT_MAX 就收手，剩下的交给 .content-fill 居中。 */
+    if (parseFloat(el.style.fontSize || 0) >= DET_FONT_SHORT_MAX - 0.01) return true;
+    return false;                                               // 还能再大一点 → 继续放大
+  };
+  const fits = fitFull;
+
+  /* 进入测量态：正文此时「按文字真实高度」排布，溢出判据才有效。
+     顺手把残留的过渡/动画全掐掉 —— 它们的优先级高于内联样式，
+     只要有一个卡在中间态，后面所有 el.style.fontSize 都会失效（详见 CSS 注释）。 */
+  if(el.getAnimations) el.getAnimations().forEach(a=>{ try{ a.cancel(); }catch(e){} });
+  wrap.classList.add("dt-measuring");
+  void el.offsetHeight;
+
+  apply(finalSize);
+  /* 第一步：一路往上加，直到「填满了」（而不是「溢出了」）。
+     ⚠️ 这里原来写的是 `if(!fits()){回退;break}`，配合旧判据等价于
+        「一溢出就停」—— 长内容永远加不上去。现在是「没填够就继续加」。
+     上限从 60 次放宽到 90 次：13→48 按 0.5 一档是 70 档，60 次不够走完。 */
+  let guard=0;
+  while(finalSize<DET_FONT_MAX && guard++<90){
+    apply(finalSize + DET_FONT_STEP);
+    if(!fits()){ apply(finalSize); break; }   // 这一档不行（没填够 / 超出 / 屏数超限）→ 回退
+    finalSize += DET_FONT_STEP;
+  }
+  /* 第二步：起点本身就「过了」时（内容极少、上限 48px 仍嫌大），往小退。
+     判据同样是「填够」，退到刚好填满为止。 */
+  guard=0;
+  while(!fits() && finalSize>DET_FONT_MIN && guard++<90){
+    finalSize -= DET_FONT_STEP;
+    apply(finalSize);
+  }
+  apply(finalSize);
+
+  /* ── 决定「短内容用满」模式（2026-11-01 第 22 版）──────────────────
+     退出测量态后量一下：这字号下正文到底占了多少。
+       ≥ 68% → 已经是「一段像样的正文」，普通模式即可（框=字高）
+       < 68% → 内容太少，怎么放大都是一小坨 → 挂 .content-fill：
+               框撑成一屏 + 文字垂直居中，把这块地方真正用起来。 */
+  wrap.classList.remove("dt-measuring");
+  void el.offsetHeight;
+
+  /* 退出测量态：正文重新吃满剩余高度（flex-grow 恢复），
+     此时框会从「文字高度」拉到容器底部，短内容下面不再留白。
+     再 cancel 一次，确保最后一次 apply 不会留下过渡残影。 */
+  if(el.getAnimations) el.getAnimations().forEach(a=>{ try{ a.cancel(); }catch(e){} });
+  wrap.classList.remove("dt-measuring");
+  void el.offsetHeight;
+
+  /* ══════════════════════════════════════════════════════════════
+     决定「短内容用满」模式（2026-11-01 第 26 版，位置修正）
+     --------------------------------------------------------------
+     ⚠️⚠️ 这段原来写在**退出测量态之前**，结果 landed 读到的是上一轮遗留的框高
+        （实测 683px，而 48px 的真实字高只有 356px），
+        683 < 805×0.68=547 不成立 → class 永远挂不上 → 字仍然挤在框顶。
+        这就是「框已经拉到底了、字还是在上半截」的真凶。
+
+     现在放在函数最末尾：所有 apply / class / 回流都落定，再取一次真实字高。
+     判据两条同时成立才挂 .content-fill：
+       · 字号已经顶到短内容上限（DET_FONT_SHORT_MAX）
+       · 顶到上限后，正文仍填不到可用区的 68%
+     长内容在 24px 时比例有 0.9+，本就不会命中，无需额外排除。 */
+  /* ⚠️⚠️ 2026-11-01 第 27 版：判据从「占地比例」换成「字数」。
+     之前用 `finalH < room*0.68` 判定「内容少」，结果是——54 个汉字在
+     502px 宽的框里用 48px 排，一行只排得下 10 个字，排成 10 行、高 683px，
+     占可用区 85%，于是被判成「内容够多，不需要居中」，字就继续挤在框顶。
+     但用户看到的明明就是一句话。
+     比例根本不是「内容多少」的度量：字放大了，比例自然就高。
+     所以直接数字数：中文按 1 计、西文数字按 0.5 计，总量 ≤160 就是短内容。
+     （参考：160 字 ≈ 手机上两屏文字，再长就该按正常长文滚动排，而不是摊在屏幕正中。） */
+  const plain = (text || "").replace(/\s+/g, "");
+  const weight = plain.replace(/[\u4e00-\u9fa5\u3000-\u303f\uff00-\uffef]/g, "").length * 0.5
+               + plain.replace(/[^\u4e00-\u9fa5\u3000-\u303f\uff00-\uffef]/g, "").length;
+  el.classList.toggle("content-fill", weight <= 160);
+  void el.offsetHeight;
+}
+
+/* 说明区摆放：跟在正文后面最自然（读起来连贯）。
+   但预览区是「吸底」的，说明必须排在预览区前面，否则会被压在下面、滚不出来。
+   → 有图时把说明挪到预览区之前，没图时原样留着。 */
+function reflowDetailDesc(hasMedia){
+  // 2026-11-05 第 34 批：预览区已挪出滚动区，不再是 .desc 的兄弟节点，
+  // 原来的「把说明挪到预览区前面」会把说明拖出正文区 → 整个函数停用。
+  return;}
+
 
 /* 图片预览区（应用商店「预览」样式）：竖版卡片横排一行、左右滑动
    —— 有图才显示；无图时整块隐藏，把空间让给正文 */
@@ -1221,8 +2348,15 @@ function renderPreview(it){
   const list=(it&&it.media)||[];
 
   // 有图才出现（没图时这块直接不占位置，用户走底部上传条添加）
-  if(!list.length){ box.style.display="none"; track.__pvCount=0; track.__pvId=null; return; }
+  if(!list.length){
+    box.style.display="none"; track.__pvCount=0; track.__pvId=null;
+    // 无图 → 正文放开占满详情栏：CSS 里 .content 不设高度上限，整栏一起滚
+    document.getElementById("detailContent").classList.add("no-media");
+    return;
+  }
   box.style.display="block";
+  // 有图 → 预览区吸底，正文在上面自然排布、随整栏滚动
+  document.getElementById("detailContent").classList.remove("no-media");
   if(count){
     // 文案区分：全是图 → 「N 张」；全是视频 → 「N 个视频」；混合 → 「N 项」
     const nVideo=list.filter(m=>String(m.type||"").startsWith("video")).length;
@@ -1287,6 +2421,516 @@ function currentDetailText(){
   const steps=(it.steps||[]).filter(s=>s.title||s.content);
   if(steps.length){if(!(detailStepIdx>=0&&detailStepIdx<steps.length))detailStepIdx=0;return steps[detailStepIdx].content||"";}
   return it.content||"";
+}
+// ================== 角色资产仓库（2026-11-16 第43批）==================
+// 存 AIGC 角色资产：设定图 + 档案 + 人物 Prompt。
+// 模式照搬「指导老师库」，只新增不改动原有数据。
+let editingRoleId=null, roleDraftMedia=[];
+// 第54批：记录本次弹窗分几次新加入的图，用于保存时按图分建角色
+let rolePendingFiles=[];
+function normRole(o){
+  o=o||{};
+  return {
+    id:o.id||uid(), name:String(o.name||"").trim(), category:String(o.category||"").trim(),
+    tags:Array.isArray(o.tags)?o.tags.map(String).filter(Boolean):[],
+    role:String(o.role||"").trim(), age:String(o.age||"").trim(),
+    appearance:String(o.appearance||"").trim(), clothing:String(o.clothing||"").trim(),
+    colors:String(o.colors||"").trim(), personality:String(o.personality||"").trim(),
+    world:String(o.world||"").trim(), prompt:String(o.prompt||"").trim(),
+    negative:String(o.negative||"").trim(), note:String(o.note||"").trim(),
+    media:Array.isArray(o.media)?o.media.filter(m=>m&&m.dataURL).map(m=>({type:String(m.type||"image/png"),name:String(m.name||""),dataURL:m.dataURL})):[],
+    favorite:!!o.favorite, createdAt:o.createdAt||Date.now()
+  };
+}
+function findRole(id){return (state.roles||[]).find(r=>r.id===id);}
+function rolePromptText(r){
+  return [String(r.prompt||"").trim(),r.negative?("Negative prompt: "+String(r.negative).trim()):""].filter(Boolean).join("\n");
+}
+// ===== 角色设定图大图预览灯箱（2026-11-17 第46批）=====
+let viewingRoleId=null,viewingMediaIdx=0;
+function roleViewerOpen(id,idx){
+  const r=findRole(id);if(!r||!(r.media||[]).length)return;
+  viewingRoleId=id;viewingMediaIdx=idx||0;
+  roleViewerRender();
+  document.getElementById("roleViewer").classList.add("show");
+  document.getElementById("roleViewer").style.display="flex";
+}
+function roleViewerRender(){
+  const r=findRole(viewingRoleId);if(!r)return;
+  const list=r.media||[];if(!list.length){roleViewerClose();return;}
+  if(viewingMediaIdx<0)viewingMediaIdx=list.length-1;
+  if(viewingMediaIdx>=list.length)viewingMediaIdx=0;
+  const m=list[viewingMediaIdx];
+  document.getElementById("rvStage").innerHTML=m.type.startsWith("video")
+    ? `<video src="${m.dataURL}" controls autoplay style="max-width:94vw;max-height:82vh;object-fit:contain;border-radius:8px"></video>`
+    : `<img src="${m.dataURL}" alt="${esc(r.name||"角色设定图")}" style="max-width:94vw;max-height:82vh;object-fit:contain;border-radius:8px">`;
+  document.getElementById("rvTitle").textContent=r.name||"未命名角色";
+  document.getElementById("rvCount").textContent=(viewingMediaIdx+1)+" / "+list.length;
+  const multi=list.length>1;
+  document.getElementById("rvPrev").style.display=multi?"":"none";
+  document.getElementById("rvNext").style.display=multi?"":"none";
+}
+function roleViewerClose(){
+  document.getElementById("roleViewer").classList.remove("show");
+  document.getElementById("roleViewer").style.display="none";
+  const v=document.querySelector("#rvStage video");if(v){try{v.pause();}catch(e){}};
+  document.getElementById("rvStage").innerHTML="";
+  viewingRoleId=null;
+}
+function roleViewerShift(d){
+  if(!viewingRoleId)return;
+  const r=findRole(viewingRoleId);if(!r)return;
+  const n=(r.media||[]).length;if(!n)return;
+  viewingMediaIdx=(viewingMediaIdx+d+n)%n;
+  roleViewerRender();
+}
+document.addEventListener("keydown",e=>{
+  const v=document.getElementById("roleViewer");
+  if(!v||!v.classList.contains("show"))return;
+  // 阻止冒泡：否则全局 Esc 处理器会 closeEdit() 把视图切回「全部提示词」
+  if(e.key==="Escape"||e.key==="ArrowLeft"||e.key==="ArrowRight")e.stopImmediatePropagation();
+  if(e.key==="Escape")roleViewerClose();
+  else if(e.key==="ArrowLeft")roleViewerShift(-1);
+  else if(e.key==="ArrowRight")roleViewerShift(1);
+});
+function roleCover(r){
+  const m=(r.media||[])[0];
+  if(!m)return '<div class="ph">🎭</div>';
+  const tag=m.type.startsWith("video")?"video":"img";
+  // 第46批：图片点开走大图预览，靠 data-view-role 交给灯箱处理
+  return `<${tag} data-view-role="${r.id}" src="${m.dataURL}" ${tag==="video"?'muted preload="metadata"':'alt=""'}>`;
+}
+function roleCardHtml(r){
+  const ops=`<button data-fav-role="${r.id}" title="收藏">${r.favorite?'★':'☆'}</button>`
+          + `<button data-edit-role="${r.id}" title="编辑">✎</button>`
+          + `<button data-del-role="${r.id}" title="删除">🗑</button>`;
+  const meta=[r.role,r.age].filter(Boolean).join(" · ")||"未设定身份";
+  return `<div class="role-card" data-role-id="${r.id}">`
+    + `<div class="role-ops">${ops}</div>`
+    + `<div class="role-cover">${roleCover(r)}</div>`
+    + `<div class="role-body"><h3>${esc(r.name||"未命名角色")}</h3>`
+    + `<div class="rmeta">${esc(r.category||"未分类")}｜${esc(meta)}</div>`
+    + `<div class="rprompt">${esc(r.prompt||"还没写人物 Prompt，点开卡片补充")}</div>`
+    + ((r.tags||[]).length?`<div class="role-tags">${r.tags.slice(0,4).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}</div>`:"")
+    + `<button class="role-copy" data-copy-role="${r.id}">📋 复制人物 Prompt</button>`
+    + `</div></div>`;
+}
+function renderRoleFilter(){
+  const box=document.getElementById("roleFilter"),cats=[...new Set((state.roles||[]).map(r=>r.category||"未分类"))];
+  box.innerHTML='<span class="lf-title">分类</span>'
+    + `<span class="lf-chip ${state.roleFilter?"":"active"}" data-rf="">全部 <span class="cnt">${state.roles.length}</span></span>`
+    + cats.map(c=>`<span class="lf-chip ${state.roleFilter===c?"active":""}" data-rf="${esc(c)}">${esc(c)} <span class="cnt">${state.roles.filter(r=>(r.category||"未分类")===c).length}</span></span>`).join("");
+}
+function renderRoles(){
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const grid=document.getElementById("rolesGrid"),empty=document.getElementById("rolesEmpty");
+  let list=(state.roles||[]).slice();
+  if(state.roleFilter)list=list.filter(r=>(r.category||"未分类")===state.roleFilter);
+  if(q){
+    const hay=r=>[r.name,r.category,r.role,r.tags.join(" "),r.appearance,r.clothing,r.prompt,r.world].join(" ").toLowerCase();
+    list=list.filter(r=>hay(r).includes(q));
+  }
+  list.sort((a,b)=>b.createdAt-a.createdAt);
+  document.getElementById("subbar").textContent="角色仓库 "+list.length+" 个";
+  const nr=document.getElementById("navRoles"); if(nr)nr.textContent=state.roles.length;
+  renderRoleFilter();
+  if(!list.length){
+    grid.innerHTML="";
+    empty.style.display="block";
+    empty.querySelector("div:last-child").textContent=state.roles.length
+      ? "没有匹配的角色，换个关键词或分类试试"
+      : "还没有角色资产，点击「＋ 添加角色」开始建立角色档案吧";
+    return;
+  }
+  empty.style.display="none";
+  grid.innerHTML=list.map(roleCardHtml).join("");
+}
+function openRoleModal(id){
+  editingRoleId=id||null;
+  const r=id?findRole(id):null;
+  roleDraftMedia=r?JSON.parse(JSON.stringify(r.media||[])):[];
+  rolePendingFiles=[];
+  document.getElementById("roleIcon").textContent=r?"✎":"＋";
+  document.getElementById("roleTitle").textContent=r?"编辑角色":"添加角色";
+  const set=(k,v)=>{const el=document.getElementById("fR"+k);if(el)el.value=v||"";};
+  set("Name",r?r.name:""); set("Cat",r?r.category:""); set("Tags",r?(r.tags||[]).join(", "):"");
+  set("Role",r?r.role:""); set("Age",r?r.age:""); set("Appearance",r?r.appearance:"");
+  set("Clothing",r?r.clothing:""); set("Colors",r?r.colors:""); set("Personality",r?r.personality:"");
+  set("World",r?r.world:""); set("Prompt",r?r.prompt:""); set("Negative",r?r.negative:"");
+  set("Note",r?r.note:"");
+  document.getElementById("fRFiles").value="";
+  document.getElementById("roleDelete").style.display=r?"":"none";
+  renderRoleThumbs();
+  document.getElementById("roleOverlay").classList.add("show");
+  setTimeout(()=>document.getElementById("fRName").focus(),50);
+}
+function closeRoleModal(){
+  document.getElementById("roleOverlay").classList.remove("show");
+  editingRoleId=null;roleDraftMedia=[];rolePendingFiles=[];
+}
+function renderRoleThumbs(){
+  document.getElementById("fRThumbs").innerHTML=roleDraftMedia.map((m,i)=>
+    `<div class="rt">${m.type.startsWith("video")?`<video src="${m.dataURL}" muted preload="metadata"></video>`:`<img src="${m.dataURL}" alt="">`}<button data-del-role-media="${i}" title="移除">×</button></div>`).join("");
+}
+// 第55批：宽容识别媒体文件——浏览器有时报不出 File.type（微信/QQ保存、扩展名或MIME信息丢失的图片），原 startsWith("image/") 会把它们丢弃，导致一次选多张只建一个角色。
+// 图片选择框 accept 已限定 image/*、video/*，所以对「类型为空」的文件一律收下；明确是其它类型（如 text/plain）才排除。
+function isMediaFile(f){
+  const t=String(f.type||"").toLowerCase();
+  if(t.startsWith("image/")||t.startsWith("video/"))return true;
+  if(t)return false;
+  return true;
+}
+function handleRoleFiles(files){
+  const jobs=[...files].filter(isMediaFile);
+  if(!jobs.length){toast("请选择图片或视频");return;}
+  // 第52/53批：一次选多张图（添加或编辑模式都一样）-> 每张图建一个独立角色
+  // 只选 1 张时走下方原逻辑：放进当前角色草稿，点保存生效
+  if(jobs.length>1){
+    const catEl=document.getElementById("fRCat");
+    const cat=catEl?catEl.value.trim():"";
+    const base=Date.now();
+    let left=jobs.length,made=0;
+    jobs.forEach((file,idx)=>{
+      const reader=new FileReader();
+      reader.onload=()=>{
+        const nm=(String(file.name||"").replace(/\.[^.]+$/,"").trim())||"未命名角色";
+        state.roles.push(normRole({
+          name:nm,category:cat,tags:[],role:"",age:"",appearance:"",clothing:"",
+          colors:"",personality:"",world:"",prompt:"",negative:"",note:"",
+          media:[{type:file.type,name:file.name,dataURL:reader.result}],
+          createdAt:base+idx
+        }));
+        made++;
+        if(!--left){
+          closeRoleModal();save();renderAll();
+          toast("已按图片建立 "+made+" 个独立角色，点每张卡片的 ✎ 可补充档案");
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    return;
+  }
+  let left=jobs.length;
+  jobs.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      roleDraftMedia.push({type:file.type,name:file.name,dataURL:reader.result});
+      rolePendingFiles.push({type:file.type,name:file.name,dataURL:reader.result});
+      renderRoleThumbs();
+      if(!--left)toast("已加入 "+jobs.length+" 个设定图，记得点保存");
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function saveRole(){
+  // 第54批：分多次加入的多张新图 -> 每张各建一个独立角色（与一次选多张一致，名字取文件名）
+  if(rolePendingFiles.length>1){
+    const catEl=document.getElementById("fRCat");
+    const cat=catEl?catEl.value.trim():"";
+    const base=Date.now();
+    rolePendingFiles.forEach((m,idx)=>{
+      const nm=(String(m.name||"").replace(/\.[^.]+$/,"").trim())||"未命名角色";
+      state.roles.push(normRole({
+        name:nm,category:cat,tags:[],role:"",age:"",appearance:"",clothing:"",
+        colors:"",personality:"",world:"",prompt:"",negative:"",note:"",
+        media:[{type:m.type,name:m.name,dataURL:m.dataURL}],
+        createdAt:base+idx
+      }));
+    });
+    const made=rolePendingFiles.length;
+    closeRoleModal();save();renderAll();
+    toast("已按图片建立 "+made+" 个独立角色，点每张卡片的 ✎ 可补充档案");
+    return;
+  }
+  const name=document.getElementById("fRName").value.trim()||"未命名角色";
+  // 第46批：角色名不再必填，留空自动命名为「未命名角色」
+  const val=k=>{const el=document.getElementById("fR"+k);return el?el.value.trim():"";};
+  const payload={
+    name, category:val("Cat"),
+    tags:val("Tags").split(/[,，、]/).map(x=>x.trim()).filter(Boolean),
+    role:val("Role"), age:val("Age"), appearance:val("Appearance"), clothing:val("Clothing"),
+    colors:val("Colors"), personality:val("Personality"), world:val("World"),
+    prompt:val("Prompt"), negative:val("Negative"), note:val("Note"),
+    media:roleDraftMedia.slice()
+  };
+  if(editingRoleId){
+    const r=findRole(editingRoleId);
+    if(r){Object.assign(r,payload);toast("已更新角色「"+r.name+"」");}
+  }else{
+    state.roles.push(normRole({...payload,createdAt:Date.now()}));
+    toast("已添加角色「"+name+"」");
+  }
+  closeRoleModal();save();renderAll();
+}
+function deleteRole(id){
+  const r=findRole(id);if(!r)return;
+  if(!confirm("确定删除角色「"+r.name+"」及其全部设定图？此操作不可撤销。"))return;
+  state.roles=state.roles.filter(x=>x.id!==id);
+  save();renderAll();toast("已删除角色「"+r.name+"」");
+}
+
+// ================== 剧本笔记（2026-11-17 第44批）==================
+// 像电脑 txt 记事本一样：纯文本、可粘贴、可导入导出 .txt，自动保存。
+let editingScriptId=null, scriptSaveTimer=null;
+function normScript(o){
+  o=o||{};
+  return {
+    id:o.id||uid(), title:String(o.title||"未命名剧本").trim(),
+    content:String(o.content||""), favorite:!!o.favorite,
+    createdAt:o.createdAt||Date.now(), updatedAt:o.updatedAt||o.createdAt||Date.now()
+  };
+}
+function findScript(id){return (state.scripts||[]).find(s=>s.id===id);}
+function scriptPreview(s){
+  const t=String(s.content||"").trim();
+  if(!t)return "（空白剧本，点开粘贴或输入正文）";
+  return t.split(/\r?\n/).filter((x,i,a)=>i<4).join("\n");
+}
+function scriptWordCount(s){return String(s.content||"").replace(/\s/g,"").length;}
+function scriptCardHtml(s){
+  const when=new Date(s.updatedAt||s.createdAt);
+  const dateStr=isNaN(when.getTime())?"":(when.getMonth()+1)+"/"+when.getDate()+" "+String(when.getHours()).padStart(2,"0")+":"+String(when.getMinutes()).padStart(2,"0");
+  const ops=`<button data-fav-script="${s.id}" title="收藏">${s.favorite?'★':'☆'}</button>`
+          + `<button data-edit-script="${s.id}" title="编辑">✎</button>`
+          + `<button data-exp-script="${s.id}" title="导出 TXT">⇩</button>`
+          + `<button data-del-script="${s.id}" title="删除">🗑</button>`;
+  return `<div class="script-card" data-script-id="${s.id}">`
+    + `<div class="script-ops">${ops}</div>`
+    + `<div class="script-body"><h3>📄 ${esc(s.title||"未命名剧本")}</h3>`
+    + `<div class="smeta">${dateStr} · ${scriptWordCount(s)} 字</div>`
+    + `<pre class="spreview">${esc(scriptPreview(s))}</pre>`
+    + `</div></div>`;
+}
+function renderScripts(){
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const grid=document.getElementById("scriptsGrid"),empty=document.getElementById("scriptsEmpty");
+  let list=(state.scripts||[]).slice();
+  if(q)list=list.filter(s=>[s.title,s.content].join(" ").toLowerCase().includes(q));
+  list.sort((a,b)=>(b.updatedAt||b.createdAt)-(a.updatedAt||a.createdAt));
+  document.getElementById("subbar").textContent="剧本笔记 "+list.length+" 篇";
+  const ns=document.getElementById("navScripts"); if(ns)ns.textContent=state.scripts.length;
+  if(!list.length){
+    grid.innerHTML="";empty.style.display="block";
+    empty.querySelector("div:last-child").textContent=state.scripts.length
+      ? "没有匹配的剧本，换个关键词试试"
+      : "还没有剧本，点「＋ 新建剧本」开始写，或「导入 TXT」把已有 txt 放进来";
+    return;
+  }
+  empty.style.display="none";
+  grid.innerHTML=list.map(scriptCardHtml).join("");
+}
+// 第48批：剧本窗口最小化 / 恢复
+function minimizeScriptWindow(){
+  flushScriptDraft();
+  if(scriptSaveTimer){clearTimeout(scriptSaveTimer);scriptSaveTimer=null;}
+  const s=editingScriptId?findScript(editingScriptId):null;
+  document.getElementById("scriptDockTitle").textContent=s?(s.title||"未命名剧本"):"剧本草稿";
+  document.getElementById("scriptOverlay").classList.remove("show");
+  document.getElementById("scriptDock").style.display="flex";
+  save();
+  toast("剧本已最小化，点右下角悬浮条恢复");
+}
+function restoreScriptWindow(){
+  document.getElementById("scriptDock").style.display="none";
+  document.getElementById("scriptOverlay").classList.add("show");
+  setTimeout(()=>document.getElementById("fScriptContent").focus(),50);
+}
+// 第50批：剧本窗口四角缩放（固定对角）
+function initScriptResize(){
+  const box=document.querySelector("#scriptOverlay .script-modal-full");
+  if(!box||box.dataset.rzReady)return;
+  box.dataset.rzReady="1";
+  // 第51批：顶栏拖拽移动窗口（点按钮不触发拖动）
+  const bar=box.querySelector(".sw-bar");
+  if(bar&&!bar.dataset.dragReady){
+    bar.dataset.dragReady="1";
+    bar.addEventListener("pointerdown",e=>{
+      if(e.target.closest("button"))return;          // ‹ / − / ✕ 照常可点
+      if(e.button!==0)return;
+      const r=box.getBoundingClientRect();
+      box.style.position="fixed";box.style.margin="0";box.style.right="auto";box.style.bottom="auto";
+      box.style.left=r.left+"px";box.style.top=r.top+"px";
+      box.style.width=r.width+"px";box.style.height=r.height+"px";
+      const sx=e.clientX,sy=e.clientY,l0=r.left,t0=r.top;
+      const VW=window.innerWidth,VH=window.innerHeight,MG=8;
+      bar.setPointerCapture&&bar.setPointerCapture(e.pointerId);
+      document.body.style.userSelect="none";
+      const move=ev=>{
+        // 允许露出 120px 边缘，保证窗口大部分仍在屏幕内即可拖动
+        let l=Math.min(Math.max(MG,l0+ev.clientX-sx),VW-120);
+        let t=Math.min(Math.max(MG,t0+ev.clientY-sy),VH-60);
+        box.style.left=l+"px";box.style.top=t+"px";
+      };
+      const up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);document.body.style.userSelect="";};
+      document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);
+    });
+  }
+  const MINW=460,MINH=340;
+  box.querySelectorAll(".rz-handle").forEach(h=>{
+    h.addEventListener("pointerdown",e=>{
+      e.preventDefault();e.stopPropagation();
+      const dir=h.dataset.rz;
+      const r=box.getBoundingClientRect();
+      // 切到 fixed 绝对定位，锁定当前左上角，才能固定对角缩放
+      box.style.position="fixed";box.style.margin="0";box.style.right="auto";box.style.bottom="auto";
+      box.style.left=r.left+"px";box.style.top=r.top+"px";
+      box.style.width=r.width+"px";box.style.height=r.height+"px";
+      const sx=e.clientX,sy=e.clientY,w0=r.width,h0=r.height,l0=r.left,t0=r.top;
+      h.setPointerCapture&&h.setPointerCapture(e.pointerId);
+      const move=ev=>{
+        const dx=ev.clientX-sx,dy=ev.clientY-sy;
+        const VW=window.innerWidth,VH=window.innerHeight,MG=8;
+        let w=w0,h=h0,l=l0,t=t0;
+        // 限制在视口内：向右/下不超屏，向左/上不越过 8px 边距，同时不低于最小尺寸
+        if(dir.indexOf("e")>=0)w=Math.max(MINW,Math.min(w0+dx,VW-l0-MG));
+        if(dir.indexOf("s")>=0)h=Math.max(MINH,Math.min(h0+dy,VH-t0-MG));
+        if(dir.indexOf("w")>=0){w=Math.max(MINW,Math.min(w0-dx,l0+w0-MG));l=l0+(w0-w);}
+        if(dir.indexOf("n")>=0){h=Math.max(MINH,Math.min(h0-dy,t0+h0-MG));t=t0+(h0-h);}
+        box.style.width=w+"px";box.style.height=h+"px";
+        box.style.left=l+"px";box.style.top=t+"px";
+      };
+      const up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);};
+      document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);
+    });
+  });
+}
+// 每次打开重置为默认尺寸（清掉上一次拖拽留下的 inline 定位）
+function resetScriptWindowSize(){
+  const box=document.querySelector("#scriptOverlay .script-modal-full");
+  if(!box)return;
+  ["position","left","top","right","bottom","width","height","margin"].forEach(k=>box.style[k]="");
+}
+function updateScriptMeta(){
+  const c=document.getElementById("fScriptContent").value;
+  const lines=c?c.split(/\r?\n/).length:0;
+  document.getElementById("scriptMeta").textContent=c.replace(/\s/g,"").length+" 字 · "+lines+" 行";
+}
+function openScriptModal(id){
+  document.getElementById("scriptDock").style.display="none";
+  resetScriptWindowSize();initScriptResize();
+  editingScriptId=id||null;
+  const s=id?findScript(id):null;
+  document.getElementById("fScriptTitle").value=s?s.title:"";
+  document.getElementById("fScriptContent").value=s?s.content:"";
+  document.getElementById("scriptModalTitle").textContent=s?"编辑剧本":"新建剧本";
+  document.getElementById("scriptDelete").style.display=s?"":"none";
+  updateScriptMeta();
+  document.getElementById("scriptOverlay").classList.add("show");
+  setTimeout(()=>document.getElementById("fScriptContent").focus(),50);
+}
+function flushScriptDraft(){
+  // 输入时先把草稿落到本机，不 renderAll，避免打断输入光标
+  const title=document.getElementById("fScriptTitle").value.trim();
+  const content=document.getElementById("fScriptContent").value;
+  if(!title&&!content)return;
+  if(!editingScriptId){
+    const n=normScript({title:title||"未命名剧本",content:content,createdAt:Date.now(),updatedAt:Date.now()});
+    state.scripts.push(n);editingScriptId=n.id;
+  }else{
+    const s=findScript(editingScriptId);
+    if(s){s.title=title||"未命名剧本";s.content=content;s.updatedAt=Date.now();}
+  }
+  save();
+}
+function scheduleScriptSave(){
+  if(scriptSaveTimer)clearTimeout(scriptSaveTimer);
+  scriptSaveTimer=setTimeout(()=>{scriptSaveTimer=null;flushScriptDraft();},400);
+}
+function closeScriptModal(){
+  document.getElementById("scriptDock").style.display="none";
+  if(scriptSaveTimer){clearTimeout(scriptSaveTimer);scriptSaveTimer=null;}
+  flushScriptDraft();
+  document.getElementById("scriptOverlay").classList.remove("show");
+  editingScriptId=null;
+  save();renderAll();
+}
+function saveScript(){
+  document.getElementById("scriptDock").style.display="none";
+  flushScriptDraft();
+  if(scriptSaveTimer){clearTimeout(scriptSaveTimer);scriptSaveTimer=null;}
+  const s=editingScriptId?findScript(editingScriptId):null;
+  toast(s?("已保存「"+s.title+"」"):"草稿已存到本机");
+  document.getElementById("scriptOverlay").classList.remove("show");
+  editingScriptId=null;
+  save();renderAll();
+}
+function deleteScript(id){
+  const s=findScript(id);if(!s)return;
+  if(!confirm("确定删除剧本「"+s.title+"」？此操作不可撤销。"))return;
+  state.scripts=state.scripts.filter(x=>x.id!==id);
+  if(editingScriptId===id){editingScriptId=null;document.getElementById("scriptOverlay").classList.remove("show");}
+  save();renderAll();toast("已删除剧本「"+s.title+"」");
+}
+function exportScriptTxt(id){
+  const s=id?findScript(id):null;
+  if(!s){toast("请先保存剧本再导出");return;}
+  const name=(s.title||"未命名剧本").replace(/[\\/:*?"<>|]/g,"_")+".txt";
+  const blob=new Blob(["\ufeff"+String(s.content||"")],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast("已导出 "+name);
+}
+// 第56批：导入 TXT 时自动清理空格（中文之间夹的空格 + 段落之间的空行）
+function cleanScriptText(txt){
+  let s=String(txt||"").replace(/^\ufeff/,"");
+  s=s.replace(/\r\n?/g,"\n");  // 统一换行符为 LF
+  s=s.replace(/([\u4e00-\u9fa5])[ \t\u3000]+(?=[\u4e00-\u9fa5])/g,"$1");  // 中文之间夹的空格删掉
+  s=s.replace(/^[ \t\u3000]+$/gm,"");  // 纯空白行视为空行
+  s=s.replace(/\n{2,}/g,"\n");  // 段落之间的空行删掉
+  return s;
+}
+// 第49批：智能识别 TXT 编码（BOM → 严格 UTF-8 → GB18030 回退）
+function decodeTxtBytes(buf){
+  const u8=new Uint8Array(buf);
+  try{
+    if(u8.length>=3&&u8[0]===0xEF&&u8[1]===0xBB&&u8[2]===0xBF)
+      return new TextDecoder("utf-8").decode(u8.subarray(3));
+    if(u8.length>=2&&u8[0]===0xFF&&u8[1]===0xFE)
+      return new TextDecoder("utf-16le").decode(u8.subarray(2));
+    if(u8.length>=2&&u8[0]===0xFE&&u8[1]===0xFF)
+      return new TextDecoder("utf-16be").decode(u8.subarray(2));
+  }catch(e){}
+  // 无 BOM：先用严格 UTF-8，含非法字节会抛错
+  try{ return new TextDecoder("utf-8",{fatal:true}).decode(u8); }catch(e){}
+  // 回退 GB18030（覆盖 GBK，中文 Windows 记事本 ANSI 默认）
+  try{ return new TextDecoder("gb18030").decode(u8); }catch(e){}
+  return new TextDecoder("utf-8").decode(u8);
+}
+function readTxtSmart(file,cb){
+  const r=new FileReader();
+  r.onload=()=>{try{cb(decodeTxtBytes(r.result));}catch(e){cb(String(r.result||""));}};
+  r.onerror=()=>cb("");
+  r.readAsArrayBuffer(file);
+}
+function importTxtFiles(files){
+  const jobs=[...files].filter(f=>/\.txt$/i.test(f.name)||/text\/plain/.test(f.type));
+  if(!jobs.length){toast("请选择 .txt 文本文件");return;}
+  let left=jobs.length, added=0;
+  jobs.forEach(file=>{
+    readTxtSmart(file,txt=>{
+      state.scripts.push(normScript({title:file.name.replace(/\.txt$/i,""),content:cleanScriptText(txt),createdAt:Date.now(),updatedAt:Date.now()}));
+      added++;
+      if(!--left){save();renderAll();toast("已导入 "+added+" 篇剧本（已自动清理空格）");}
+    });
+  });
+}
+function appendTxtToCurrent(files){
+  const jobs=[...files].filter(f=>/\.txt$/i.test(f.name)||/text\/plain/.test(f.type));
+  if(!jobs.length){toast("请选择 .txt 文本文件");return;}
+  let left=jobs.length, empty=0;
+  const ta=document.getElementById("fScriptContent");
+  jobs.forEach(file=>{
+    readTxtSmart(file,txt=>{
+      const clean=cleanScriptText(txt);
+      if(!clean.trim())empty++;
+      else{
+        const block="【"+file.name.replace(/\.txt$/i,"")+"】\n"+clean;
+        ta.value=(ta.value?ta.value.replace(/\s+$/,"")+"\n\n":"")+block;
+      }
+      updateScriptMeta();scheduleScriptSave();
+      if(!--left)toast(empty?("已追加，但有 "+empty+" 个文件是空的或无法识别文字"):("已追加 "+jobs.length+" 个 TXT 到正文（已自动清理空格）"));
+    });
+  });
 }
 function renderAll(){renderSidebar();renderCenter();renderDetail();}
 
@@ -1356,11 +3000,26 @@ function savePrompt(){
     content=document.getElementById("fContent").value.trim();
     if(!content){toast("请填写提示词内容");return;}
   }
-  if(editingId){const it=find(editingId);Object.assign(it,{title,category,tags,content,desc,steps});toast("已更新");}
+  if(editingId){
+    const it=find(editingId);
+    // 覆盖之前先留快照：这样每次编辑都留下「上一版长什么样」，误改可以回去
+    if(it) snapVersion(it,"编辑保存前");
+    Object.assign(it,{title,category,tags,content,desc,steps});
+    toast("已更新");
+  }
   else{const it=seed({title,category,tags,content,desc,steps});state.items.push(it);state.selectedId=it.id;toast("已添加");}
   save();closeEdit();renderAll();
 }
-function deletePrompt(id){if(!confirm("确定删除这条提示词？"))return;state.items=state.items.filter(i=>i.id!==id);if(state.selectedId===id)state.selectedId=null;save();renderAll();toast("已删除");}
+function deletePrompt(id){
+  // 2026-11-05 从 MISTY 移植：删除先进回收站，可恢复；不再弹 confirm（可逆操作不打断）
+  const it=find(id);if(!it)return;
+  state.items=state.items.filter(i=>i.id!==id);
+  state.trash=state.trash||[];
+  state.trash.unshift({item:it,deletedAt:Date.now()});
+  if(state.selectedId===id)state.selectedId=null;
+  save();renderAll();
+  toast("已移入回收站（设置 → 回收站 可恢复）");
+}
 function toggleFav(id){const it=find(id);if(it){it.favorite=!it.favorite;save();renderAll();}}
 function addCategory(){const name=document.getElementById("catName").value.trim();if(!name){toast("请输入分类名称");return;}
   if(editingCat){const idx=state.categories.indexOf(editingCat);if(idx>-1)state.categories[idx]=name;state.items.forEach(i=>{if(i.category===editingCat)i.category=name;});}
@@ -1733,6 +3392,10 @@ function matchContest(l){
   const url=l.url||"";
   const text=(title+" "+desc+" "+url).toLowerCase();
   if(!text.trim())return null;
+  // 第41批（2026-11-12）：学校2026立项项目不属于应用内置的教育部 A/B 类赛事名单，
+  // 模糊识别会把「中国国际大学生创新大赛」错配成「中国大学生计算机设计大赛」。
+  // 这批直接返回 null：既不显示错误徽标，也不会被「识别等级」按钮批量改档。
+  if(/📌 (双创类|影视新媒体类)｜/.test(desc))return null;
 
   // ① 预置关键词（长词优先，A 类优先）
   for(const r of CONTEST_RULES_SORTED){
@@ -1835,6 +3498,12 @@ function levelBadgeHtml(l){
   // 不这么做的话，卡片上就只有一个「比赛」标签，看起来跟"漏标了"一模一样，
   // 分不清是系统没认出、还是自己没设。点了钢笔图标进编辑弹窗可以直接手动选档。
   if(!l.level){
+    // 第41批补录的 14 项：改显学校通知附件里的立项类别，而不是虚线「待确认」。
+    const mNo=(l.desc||"").match(/学校2026立项序号 (\d+)/);
+    const SCHOOL_LEVEL_2026={"108":"A类重要赛事","110":"A类重要赛事","109":"A类重要赛事","92":"A类重要赛事","2":"A类重要赛事","5":"A","20":"A","54":"B","55":"B","56":"C","57":"C","58":"C","59":"C","60":"C"};
+    if(mNo&&SCHOOL_LEVEL_2026[mNo[1]]){
+      return `<span class="link-level lv-x" title="武汉晴川学院2026年度学科竞赛立项类别｜武晴教字〔2026〕37号附件原文">校 · ${SCHOOL_LEVEL_2026[mNo[1]]}</span>`;
+    }
     if(isContestCat(l.cat)){
       return `<span class="link-level lv-x" title="不在你给的教育部 A/B 类名单内，或名称差得太多认不出来。\n点这张卡片右上角 ✎ 可手动选择等级。">? 待确认</span>`;
     }
@@ -1964,21 +3633,43 @@ function linkCardHtml(l){
 function hostFull(u){try{return new URL(u).hostname||"";}catch(e){return String(u||"").replace(/^[a-zA-Z]+:\/\//,"").split("/")[0];}}
 function favCache(){try{return JSON.parse(localStorage.getItem("pvFavCache2")||"{}");}catch(e){return {};}}
 function favCacheSet(host,src){try{const c=favCache();c[host]=src;localStorage.setItem("pvFavCache2",JSON.stringify(c));}catch(e){}}
+// 有些站只绑了 www 子域，裸域 DNS 根本解析不出来（如 huacanjiang.com），
+// 这时对裸域发的任何请求都会直接失败。补一个 www 变体作为后备。
+// 反向不补（www → 裸域）：能访问的 www 站，补裸域通常也是死的，徒增无效请求。
+function hostAlt(u){
+  const h=hostFull(u);
+  if(!h)return "";
+  return /^www\./i.test(h)? "" : "www."+h;
+}
 function faviconSources(l){
   const host=hostFull(l.url);
   if(!host)return [];
-  // 实测可达顺序（2026-09-06 验证）：cccyun 聚合源（国内快）→ 站点原生 favicon.ico → faviconkit
-  // → 四级都失败后 favErr 会转入 favHtmlProbe：直接读官网首页 HTML 解析 <link rel="icon"> 声明的真实图标
+  const alt=hostAlt(l.url);
+  // 实测可达顺序（2026-10-25 更新）：cccyun 聚合源 → 站点原生 favicon.ico → faviconkit
+  // → （裸域时）www 变体的同样三级 → favicon.im 兜底
+  // → 全部失败后 favErr 会转入 favHtmlProbe：直接读官网首页 HTML 解析 <link rel="icon"> 声明的真实图标
   // 注意：不放 icon.horse —— 它对小站返回灰色字母占位图，冒充成功会堵死后续解析
+  const proto=(l.url||"").startsWith("http://")?"http://":"https://";
   const list=[
     "https://favicon.cccyun.cc/"+host,
-    ((l.url||"").startsWith("http://")?"http://":"https://")+host+"/favicon.ico",
+    proto+host+"/favicon.ico",
     "https://api.faviconkit.com/"+host+"/64"
   ];
+  if(alt){
+    // www 变体：放在原生三级之后，避免拖慢正常站点的首屏
+    list.push("https://favicon.cccyun.cc/"+alt);
+    list.push(proto+alt+"/favicon.ico");
+  }
+  // favicon.im 兜底：实测对国内小站可用，放最后不干扰前面已生效的源
+  list.push("https://favicon.im/"+host);
   const cache=favCache();
   const cached=cache[host];
   // 跳过历史上被 icon.horse 占位图污染的缓存
   if(cached&&!cached.includes("icon.horse"))list.unshift(cached); // 已验证成功的源排最前，秒加载
+  // 解析官网 HTML 拿到的「真实图标地址」优先级最高：
+  // 这类地址往往在 CDN 上（如华灿奖的 oss.moocollege.com/.../xxx.ico），比聚合源像素更大、更准
+  const real=cache["#real:"+host];
+  if(real)list.unshift(real);
   return list;
 }
 function favImgHtml(l){
@@ -1994,12 +3685,21 @@ window.favOk=function(img){
   // 某些源返回 1x1 透明像素占位图：视为失败，继续尝试下一个源
   // 注意：SVG 无固有尺寸时 naturalWidth 为 0，属正常情况，不能误判为失败
   if(img.naturalWidth===1&&img.naturalHeight===1){window.favErr(img);return;}
+  // favicon.im 找不到图标时不是返回 404，而是回一张「灰圆 + 斜体字母 f」的 SVG 占位图，状态码还是 200。
+  // 这种占位图必须当成失败继续换源，否则会盖住首字母、还会把假地址写进缓存永久锁死。
+  // 实测：那枚占位 SVG 在 NW.js 里渲染出来是 128~150px，所以不能按宽度阈值判断，
+  // 只能按来源判定 —— 只要是 favicon.im 返回的，就不采信（它要么是占位图，要么质量最差）。
+  const _fs=String(img.dataset.src||img.src||"");
+  if(/favicon\.im\//i.test(_fs)){window.favErr(img);return;}
   img.dataset.done="1";
   img.style.display="";
   const wrap=img.parentElement;
   if(wrap){const t=wrap.querySelector(".ico-letter");if(t)t.style.display="none";}
   const host=img.dataset.host,src=img.dataset.src;
-  if(host&&src)favCacheSet(host,src);
+  // favicon.im 的地址一律不写缓存：它是所有源里质量最差的，缓存下来会让好图标长期出不来
+  if(host&&src&&!/favicon\.im\//i.test(String(src)))favCacheSet(host,src);
+  // 探测（读官网 HTML）拿到的地址单独存一份：下次直接用它，不必再跑一遍 Node 探测
+  if(host&&src&&img.dataset.probed==="1")favCacheSet("#real:"+host,src);
 };
 // 兜底巡检（两阶段）：8 秒后在同一源加时间戳重试（小站响应慢，先别换源）；24 秒仍无结果才切换下一个源
 let favAuditTimer=null;
@@ -2040,13 +3740,28 @@ function favHtmlProbe(img){
   if(!url){if(img.parentElement)img.remove();return;}
   let mod;
   try{mod=require("https");}catch(e){if(img.parentElement)img.remove();return;}
+  // 证书容错的关键：Node 默认 https.get 遇到证书域名不匹配会直接 error，整个探测就废了。
+  // 而很多国内小站（如 www.huacanjiang.com）的证书链本身就不规范，
+  // 但我们只是在读它公开首页里的 <link rel="icon">，不传输任何数据，降级不校验是安全的。
+  const agent=new mod.Agent({rejectUnauthorized:false,keepAlive:false});
+  // 待探测的候选根地址（顺序很重要）：
+  // www 变体排前面 —— 实测华灿奖 huacanjiang.com 这类裸域 DNS 直接查不到，
+  // 先试裸域会白等 15 秒超时才轮到 www，用户看到的就是「一直不加载」。
+  // 有 www 变体时先试 www；没有 www 变体（本来就是 www 站）才用原地址。
+  const alt=hostAlt(img.dataset.url);
+  let candidates=[];
+  if(alt){
+    try{candidates.push(new URL(url).protocol+"//"+alt+"/");}catch(e){}
+  }
+  candidates.push(url);
+  let stage=0;
   const finish=(href)=>{
     if(!href){if(img.parentElement)img.remove();return;}
     try{href=new URL(href,url).href;}catch(e){}
     img.dataset.src=href;img.src=href; // 加载成功会走 favOk 正常盖字母并缓存
   };
   const get=(u,redirects)=>{
-    const req=mod.get(u,{timeout:15000,headers:{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126","Accept":"text/html,*/*"}},res=>{
+    const req=mod.get(u,{timeout:15000,agent:agent,headers:{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126","Accept":"text/html,*/*"}},res=>{
       // 跟随最多 3 次重定向
       if(res.statusCode>=300&&res.statusCode<400&&res.headers.location&&redirects<3){
         res.resume();
@@ -2057,25 +3772,53 @@ function favHtmlProbe(img){
       res.on("data",d=>{if(html.length<300000)html+=d;});
       res.on("end",()=>{
         // 优先标准 icon，其次 apple-touch-icon，最后随手抓 /logo 类图片
-        const tags=[];
-        const re=/<link[^>]+>/gi;let t;
+        // 收集所有 icon 类声明，然后按「可靠性」重新排序再取第一个。
+        // 为什么要重排：华灿奖首页同时声明了
+        //     <link rel="icon" href="/favicon.ico">                          ← 常见套话，文件可能根本不存在
+        //     <link rel="shortcut icon" href="https://oss.moocollege.com/…ico"> ← 真图标，在 CDN 上
+        // 如果按 HTML 里出现的先后取，就会先拿到 /favicon.ico 这个死链，
+        // 加载失败后再走一遍 favErr 才回来 —— 表现为「图标半天不出来」。
+        // 所以：绝对地址 > 相对路径；非 /favicon.ico 的具名图标 > /favicon.ico 默认值。
+        const picks=[];
+        // 只扫 rel 属性值本身：必须整词等于 icon / shortcut icon / apple-touch-icon / mask-icon 之类，
+        // 不能对整段标签模糊匹配 —— 否则 <link rel="stylesheet" class="cos-icon…"> 也会被当成图标声明
+        const re=/<link\b[^>]*>/gi;let t;
         while((t=re.exec(html))){
           const tag=t[0];
-          if(/rel=["'][^"']*icon[^"']*["']/i.test(tag))tags.unshift(tag);      // icon 声明优先
-          else if(/rel=["']apple-touch-icon["']/i.test(tag))tags.push(tag);
+          const rm=tag.match(/\brel\s*=\s*["']([^"']*)["']/i);
+          if(!rm)continue;
+          const rel=rm[1].toLowerCase();
+          // icon 相关只可能是这几种写法，其它（stylesheet / preload / manifest …）一律跳过
+          const isIcon=/(^|\s)(shortcut\s+)?icon(\s|$)|apple-touch-icon|mask-icon/.test(rel);
+          if(!isIcon)continue;
+          const hh=tag.match(/\bhref\s*=\s*["']([^"']+)["']/i);
+          if(!hh||!hh[1])continue;
+          const href=hh[1].trim();
+          let score=0;
+          if(/^https?:\/\//i.test(href))score+=10;              // 绝对地址：多半在 CDN 上，最可靠
+          if(/^\/\//.test(href))score+=8;                        // 协议相对地址
+          if(/favicon\.ico$/i.test(href.split(/[?#]/)[0]))score-=4; // 默认名，经常是缺省套话
+          if(/\.(png|svg|webp)$/i.test(href.split(/[?#]/)[0]))score+=3; // 现代格式，通常真有文件
+          // 备用图标降级：apple-touch-icon / mask-icon 是给「添加到桌面」用的方形大图，
+          // 不是网页标签上显示的那枚小图标。若不加权，它们因为常在 CDN（绝对地址 +10）
+          // 会反超真正的 favicon —— 实测百度就会选到 ios 首图。
+          if(/apple-touch-icon|mask-icon/i.test(rel))score-=20;
+          picks.push({href,score,n:picks.length});
         }
-        let href=null;
-        for(const tag of tags){
-          const hh=tag.match(/href=["']([^"']+)["']/i);
-          if(hh&&hh[1]){href=hh[1];break;}
-        }
-        finish(href);
+        picks.sort((a,b)=> b.score-a.score || a.n-b.n);
+        if(picks.length)finish(picks[0].href);
+        else next(); // 这个根地址没声明图标，换下一个候选
       });
     });
-    req.on("timeout",()=>{req.destroy();finish(null);});
-    req.on("error",()=>finish(null));
+    req.on("timeout",()=>{req.destroy();next();});
+    req.on("error",()=>next());
   };
-  get(url,0);
+  // 依次尝试候选根地址；全部失败才放弃（保留首字母兜底）
+  const next=()=>{
+    if(stage<candidates.length){get(candidates[stage++],0);}
+    else{finish(null);}
+  };
+  next();
 }
 function fillLinkCatSelect(sel,selected){
   sel.innerHTML=`<option value="">未分类</option>`+state.linkCats.map(c=>`<option value="${esc(c)}" ${c===selected?'selected':''}>${esc(c)}</option>`).join("");
@@ -2512,7 +4255,7 @@ function autoAssignAll(){
 // ---------- media ----------
 function handleFiles(files){
   const it=find(state.selectedId);if(!it)return;
-  const jobs=[...files].filter(f=>f.type.startsWith("image/")||f.type.startsWith("video/"));
+  const jobs=[...files].filter(isMediaFile);
   if(!jobs.length){toast("请选择图片或视频");return;}
   jobs.forEach(file=>{
     const reader=new FileReader();
@@ -2785,8 +4528,21 @@ function lbMoveDrag(e){if(!lbDragging)return;e.preventDefault();const pt=e.touch
 function lbEndDrag(){lbDragging=false;document.getElementById("lbStage").classList.remove("dragging");}
 
 // ---------- import/export ----------
-function exportData(){const blob=new Blob([JSON.stringify({items:state.items,links:state.links,linkCats:state.linkCats,categories:state.categories,teachers:state.teachers},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="提示词宝库_"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(a.href);toast("已导出");}
-function importData(file,merge=false){const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(reader.result);const items=(obj.items||[]).map(o=>seed({title:o.title||"未命名",category:o.category||"未分类",tags:Array.isArray(o.tags)?o.tags:(o.tags?String(o.tags).split(","):[]),content:o.content||"",desc:o.desc||"",media:o.media||[],steps:Array.isArray(o.steps)?o.steps.map(s=>({title:s.title||"",content:s.content||""})):[]}));const cats=Array.isArray(obj.categories)?obj.categories:[];const links=Array.isArray(obj.links)?obj.links.filter(o=>o&&o.url).map(o=>({id:uid(),title:o.title||"",url:String(o.url),cat:String(o.cat||""),desc:o.desc||"",icon:o.icon?String(o.icon):"",createdAt:o.createdAt||Date.now()})):[];const linkCats=Array.isArray(obj.linkCats)?obj.linkCats.filter(Boolean).map(String):[];const teachers=Array.isArray(obj.teachers)?obj.teachers.filter(o=>o&&(o.name||o.phone||o.email)).map(normTeacher):[];if(merge){state.items=state.items.concat(items);state.categories=[...new Set([...state.categories,...cats])];state.links=state.links.concat(links);state.linkCats=[...new Set([...state.linkCats,...linkCats])];state.teachers=state.teachers.concat(teachers);}else{state.items=items;state.categories=cats.length?cats:DEFAULT_CATS.slice();state.selectedId=null;if(Array.isArray(obj.links))state.links=links;if(linkCats.length)state.linkCats=linkCats;if(Array.isArray(obj.teachers))state.teachers=teachers;}save();renderAll();toast(`已导入 ${items.length} 条提示词、${teachers.length} 位老师`);}catch(e){toast("导入失败：格式不正确");}};reader.readAsText(file);}
+function exportData(){const blob=new Blob([JSON.stringify({items:state.items,links:state.links,roles:state.roles,scripts:state.scripts,linkCats:state.linkCats,categories:state.categories,teachers:state.teachers},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="提示词宝库_"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(a.href);toast("已导出");}
+function importData(file,merge=false){const reader=new FileReader();reader.onload=()=>{let dupSkip=0;try{const obj=JSON.parse(reader.result);const items=(obj.items||[]).map(o=>seed({title:o.title||"未命名",category:o.category||"未分类",tags:Array.isArray(o.tags)?o.tags:(o.tags?String(o.tags).split(","):[]),content:o.content||"",desc:o.desc||"",media:o.media||[],steps:Array.isArray(o.steps)?o.steps.map(s=>({title:s.title||"",content:s.content||""})):[]}));const roles=Array.isArray(obj.roles)?obj.roles.map(normRole):[];const scripts=Array.isArray(obj.scripts)?obj.scripts.map(normScript):[];
+const cats=Array.isArray(obj.categories)?obj.categories:[];const links=Array.isArray(obj.links)?obj.links.filter(o=>o&&o.url).map(o=>({id:uid(),title:o.title||"",url:String(o.url),cat:String(o.cat||""),desc:o.desc||"",icon:o.icon?String(o.icon):"",createdAt:o.createdAt||Date.now()})):[];const linkCats=Array.isArray(obj.linkCats)?obj.linkCats.filter(Boolean).map(String):[];const teachers=Array.isArray(obj.teachers)?obj.teachers.filter(o=>o&&(o.name||o.phone||o.email)).map(normTeacher):[];if(merge){state.items=state.items.concat(items);state.categories=[...new Set([...state.categories,...cats])];// 第42批：合并网址时按「标题」或「完整网址」去重，避免同一赛事重复出现
+const seenT=new Set(state.links.map(l=>String(l.title||"").trim().toLowerCase()));
+const seenU=new Set(state.links.map(l=>String(l.url||"").trim().toLowerCase()));
+const fresh=links.filter(l=>{
+  const t=String(l.title||"").trim().toLowerCase(),u=String(l.url||"").trim().toLowerCase();
+  if((t&&seenT.has(t))||(u&&seenU.has(u)))return false;
+  if(t)seenT.add(t);if(u)seenU.add(u);return true;
+});
+dupSkip=links.length-fresh.length;
+state.links=state.links.concat(fresh);
+state.linkCats=[...new Set([...state.linkCats,...linkCats])];state.teachers=state.teachers.concat(teachers);
+state.roles=state.roles.concat(roles);state.scripts=state.scripts.concat(scripts);}else{state.items=items;state.categories=cats.length?cats:DEFAULT_CATS.slice();state.selectedId=null;if(Array.isArray(obj.links))state.links=links;if(linkCats.length)state.linkCats=linkCats;if(Array.isArray(obj.teachers))state.teachers=teachers;
+if(Array.isArray(obj.roles))state.roles=roles;if(Array.isArray(obj.scripts))state.scripts=scripts;}save();renderAll();toast(`已导入 ${items.length} 条提示词、${teachers.length} 位老师、${scripts.length} 篇剧本`+(dupSkip?`（网址跳过 ${dupSkip} 条重复）`:""));}catch(e){toast("导入失败：格式不正确");}};reader.readAsText(file);}
 
 // ---------- events ----------
 document.getElementById("search").addEventListener("input",()=>{renderCenter();renderDetail();});
@@ -2814,10 +4570,13 @@ document.getElementById("dPrev").addEventListener("click",()=>{const list=filter
 document.getElementById("dNext").addEventListener("click",()=>{const list=filtered();const idx=list.findIndex(i=>i.id===state.selectedId);if(idx<list.length-1){state.selectedId=list[idx+1].id;renderCenter();renderDetail();}});
 document.getElementById("dClose").addEventListener("click",()=>{state.selectedId=null;renderCenter();renderDetail();});
 document.getElementById("dEdit").addEventListener("click",()=>openEdit(state.selectedId));
+document.getElementById("dVersion").addEventListener("click",()=>openVersionHistory(state.selectedId));
+document.getElementById("btnPng").addEventListener("click",()=>openPngImport());
 document.getElementById("dStar").addEventListener("click",()=>toggleFav(state.selectedId));
 document.getElementById("dDelete").addEventListener("click",()=>deletePrompt(state.selectedId));
-document.getElementById("dCopy").addEventListener("click",()=>{const t=currentDetailText();if(t)copyText(t);});
-document.getElementById("dUse").addEventListener("click",()=>{const t=currentDetailText();if(t)copyText(t);});
+// 注意：dCopy / dUse 的点击监听已移到文件末尾的「增强功能模块」里统一接管
+// （带 {{变量}} 的条目会先弹填空面板，其余照旧直接复制）。
+// 这里不能再绑一份，否则每点一次会触发两遍：既弹窗又直接复制原文。
 document.getElementById("dSteps").addEventListener("click",e=>{
   const tab=e.target.closest("[data-step]");if(!tab)return;
   detailStepIdx=parseInt(tab.dataset.step,10);
@@ -3129,7 +4888,7 @@ document.getElementById("dMedias").addEventListener("click",e=>{
   track.addEventListener("dragstart", e => { if (e.target.closest(".pv-card")) e.preventDefault(); });
 })();
 
-document.getElementById("btnAdd").addEventListener("click",()=>{if(state.mode==="links"){openLinkModal(null);return;}if(state.mode==="teachers"){openTeacherModal(null);return;}openEdit(null);});
+document.getElementById("btnAdd").addEventListener("click",()=>{if(state.mode==="links"){openLinkModal(null);return;}if(state.mode==="teachers"){openTeacherModal(null);return;}if(state.mode==="roles"){openRoleModal(null);return;}if(state.mode==="scripts"){openScriptModal(null);return;}openEdit(null);});
 // 网址收藏：卡片点击=系统浏览器打开；✎编辑；🗑删除
 document.getElementById("linksGrid").addEventListener("click",e=>{
   const del=e.target.closest("[data-del-link]");if(del){e.stopPropagation();deleteLink(del.dataset.delLink);return;}
@@ -3168,6 +4927,99 @@ document.getElementById("teachersGrid").addEventListener("click",e=>{
   const card=e.target.closest("[data-tc-id]");
   if(card){openTeacherModal(card.dataset.tcId);}
 });
+// 角色仓库事件（2026-11-16 第43批）
+document.getElementById("btnAddRole").addEventListener("click",()=>openRoleModal(null));
+document.getElementById("btnCopyAllRoles").addEventListener("click",()=>{
+  const list=(state.roles||[]).map(r=>"【"+(r.name||"未命名角色")+"】\n"+rolePromptText(r)).filter(x=>x.includes("\n")).join("\n\n");
+  if(!list){toast("还没有角色 Prompt 可复制");return;}
+  copyText(list);
+});
+document.getElementById("roleFilter").addEventListener("click",e=>{
+  const chip=e.target.closest("[data-rf]");if(!chip)return;
+  state.roleFilter=chip.dataset.rf;renderRoles();
+});
+document.getElementById("rolesGrid").addEventListener("click",e=>{
+  const cp=e.target.closest("[data-copy-role]");
+  if(cp){e.stopPropagation();const r=findRole(cp.dataset.copyRole);if(r)copyText(rolePromptText(r));return;}
+  const fav=e.target.closest("[data-fav-role]");
+  if(fav){e.stopPropagation();const r=findRole(fav.dataset.favRole);if(r){r.favorite=!r.favorite;save();renderRoles();}return;}
+  const ed=e.target.closest("[data-edit-role]");
+  if(ed){e.stopPropagation();openRoleModal(ed.dataset.editRole);return;}
+  const dl=e.target.closest("[data-del-role]");
+  if(dl){e.stopPropagation();deleteRole(dl.dataset.delRole);return;}
+  // 第46批：点设定图只看大图；进编辑只走上面的 ✎ 编辑按钮
+  const view=e.target.closest("[data-view-role]");
+  if(view){e.stopPropagation();roleViewerOpen(view.dataset.viewRole,0);return;}
+});
+// 灯箱事件（第46批）
+document.getElementById("rvClose").addEventListener("click",roleViewerClose);
+document.getElementById("rvPrev").addEventListener("click",()=>roleViewerShift(-1));
+document.getElementById("rvNext").addEventListener("click",()=>roleViewerShift(1));
+document.getElementById("roleViewer").addEventListener("click",e=>{
+  if(e.target.id==="roleViewer")roleViewerClose();
+});
+
+document.getElementById("roleOverlay").addEventListener("click",e=>{
+  if(e.target.id==="roleOverlay")closeRoleModal();
+});
+document.getElementById("roleOverlay").addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.tagName!=="TEXTAREA"){e.preventDefault();saveRole();}
+});
+// 第47批：顶部返回/取消按钮（原底部取消按钮已移除）
+document.getElementById("roleBack").addEventListener("click",closeRoleModal);
+document.getElementById("roleX").addEventListener("click",closeRoleModal);
+document.getElementById("roleSave").addEventListener("click",saveRole);
+document.getElementById("roleDelete").addEventListener("click",()=>{
+  if(editingRoleId){const id=editingRoleId;closeRoleModal();deleteRole(id);}
+});
+document.getElementById("fRFiles").addEventListener("change",e=>{
+  if(e.target.files&&e.target.files.length)handleRoleFiles(e.target.files);
+  e.target.value="";
+});
+document.getElementById("fRThumbs").addEventListener("click",e=>{
+  const b=e.target.closest("[data-del-role-media]");if(!b)return;
+  roleDraftMedia.splice(+b.dataset.delRoleMedia,1);renderRoleThumbs();
+});
+// 剧本笔记事件（2026-11-17 第44批）
+document.getElementById("btnAddScript").addEventListener("click",()=>openScriptModal(null));
+document.getElementById("btnImportScript").addEventListener("click",()=>document.getElementById("scriptFileInput").click());
+document.getElementById("scriptFileInput").addEventListener("change",e=>{
+  if(e.target.files&&e.target.files.length)importTxtFiles(e.target.files);
+  e.target.value="";
+});
+document.getElementById("fScriptImport").addEventListener("change",e=>{
+  if(e.target.files&&e.target.files.length)appendTxtToCurrent(e.target.files);
+  e.target.value="";
+});
+document.getElementById("importCurScript").addEventListener("click",()=>document.getElementById("fScriptImport").click());
+document.getElementById("exportCurScript").addEventListener("click",()=>exportScriptTxt(editingScriptId));
+document.getElementById("scriptsGrid").addEventListener("click",e=>{
+  const fav=e.target.closest("[data-fav-script]");
+  if(fav){e.stopPropagation();const s=findScript(fav.dataset.favScript);if(s){s.favorite=!s.favorite;save();renderScripts();}return;}
+  const ed=e.target.closest("[data-edit-script]");
+  if(ed){e.stopPropagation();openScriptModal(ed.dataset.editScript);return;}
+  const ex=e.target.closest("[data-exp-script]");
+  if(ex){e.stopPropagation();exportScriptTxt(ex.dataset.expScript);return;}
+  const dl=e.target.closest("[data-del-script]");
+  if(dl){e.stopPropagation();deleteScript(dl.dataset.delScript);return;}
+  const card=e.target.closest("[data-script-id]");
+  if(card)openScriptModal(card.dataset.scriptId);
+});
+document.getElementById("scriptOverlay").addEventListener("click",e=>{
+  // 第51批：点遮罩不再关闭剧本窗口（避免误触丢失编辑中的草稿）
+});
+document.getElementById("scriptCancel").addEventListener("click",closeScriptModal);
+// 第48批：顶栏 ‹ 返回 / ✕ 取消 / − 最小化 + 悬浮条点击恢复
+document.getElementById("scriptBack").addEventListener("click",closeScriptModal);
+document.getElementById("scriptX").addEventListener("click",closeScriptModal);
+document.getElementById("scriptMin").addEventListener("click",minimizeScriptWindow);
+document.getElementById("scriptDock").addEventListener("click",restoreScriptWindow);
+document.getElementById("scriptSave").addEventListener("click",saveScript);
+document.getElementById("scriptDelete").addEventListener("click",()=>{
+  if(editingScriptId){const id=editingScriptId;closeScriptModal();deleteScript(id);}
+});
+document.getElementById("fScriptContent").addEventListener("input",()=>{updateScriptMeta();scheduleScriptSave();});
+document.getElementById("fScriptTitle").addEventListener("input",scheduleScriptSave);
 // 回车直接保存（表单里手不用离开键盘）
 document.getElementById("teacherOverlay").addEventListener("keydown",e=>{
   if(e.key==="Enter"&&e.target.tagName!=="TEXTAREA"){e.preventDefault();saveTeacher();}
@@ -4764,7 +6616,691 @@ async function init(){
     }
   }catch(e){}
 }
+
 init();
+
+/* ============================================================
+ * 增强功能模块 v1.0（2026-10-27）
+ *   ① 变量模板 {{var}} 填空复制
+ *   ② 版本历史快照与回滚
+ *   ③ 从出图 PNG 提取生成参数
+ *   ④ 全局热键悬浮窗（数据桥接 + 接收指令）
+ * 全部挂载在 window 上，不污染原有闭包变量。
+ * ============================================================ */
+
+/* ---------------- ① 变量模板 ---------------- */
+
+// 从文本里找出所有 {{变量名}}，按出现顺序去重
+// 变量名规则：字母数字下划线中文，允许空格和短横线（如 {{角色 名称}}）
+// 兼容单花括号冲突：只认双花括号，避免误伤 JSON 里的 {seed: 123}
+function tplVars(text){
+  const out=[];
+  const seen={};
+  const re=/\{\{\s*([^{}]{1,40}?)\s*\}\}/g;
+  let m;
+  while((m=re.exec(String(text||"")))){
+    const name=m[1].trim();
+    if(!name) continue;
+    if(seen[name]) continue;
+    seen[name]=1;
+    out.push(name);
+  }
+  return out;
+}
+
+// 一段文本（可能是分步里的某一步）里出现了哪些变量
+function tplVarsOf(text){
+  return tplVars(text);
+}
+
+// 用填好的值替换文本里的变量；没填的保留原样，方便用户看出漏了哪项
+function tplFill(text, values){
+  return String(text||"").replace(/\{\{\s*([^{}]{1,40}?)\s*\}\}/g, (whole, raw)=>{
+    const name=String(raw).trim();
+    const v=values[name];
+    return (v===undefined||v===null||v==="") ? whole : String(v);
+  });
+}
+
+// 当前所处的「复制上下文」：是整条提示词，还是分步里的某一步
+function currentDetailCtx(){
+  const it=find(state.selectedId);
+  if(!it) return null;
+  const steps=(it.steps||[]).filter(x=>x.title||x.content);
+  if(steps.length){
+    if(!(detailStepIdx>=0&&detailStepIdx<steps.length)) detailStepIdx=0;
+    const st=steps[detailStepIdx];
+    return {item:it, text:st.content||"", label:st.title||("第"+(detailStepIdx+1)+"步")};
+  }
+  return {item:it, text:it.content||"", label:it.title||""};
+}
+
+let varCtx=null;         // {ctx, vars, values}
+
+// 打开变量填空弹窗
+function openVarFill(){
+  const ctx=currentDetailCtx();
+  if(!ctx||!String(ctx.text||"").trim()){toast("这条提示词没有内容可复制");return;}
+  const vars=tplVars(ctx.text);
+  if(!vars.length){copyText(ctx.text);return;}   // 没有变量，直接老样子复制
+
+  varCtx={ctx, vars, values:{}};
+  vars.forEach(v=>{varCtx.values[v]="";});
+
+  document.getElementById("varCount").textContent=vars.length;
+  const form=document.getElementById("varForm");
+  form.innerHTML=vars.map((v,i)=>{
+    // 变量名里带「负面」「negative」的自动给成多行输入框，其它单行
+    const multiline=/负面|negative|不要|禁止/i.test(v);
+    const id="varF"+i;
+    return `<div class="var-row">
+      <div class="var-name"><code>{{${esc(v)}}}</code><span class="var-tag">共 ${(String(ctx.text).match(new RegExp("\\{\\{\\s*"+v.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s*\\}\\}","g"))||[]).length} 处</span></div>
+      ${multiline
+        ? `<textarea id="${id}" data-var="${esc(v)}" placeholder="在这里填「${esc(v)}」…"></textarea>`
+        : `<input id="${id}" type="text" data-var="${esc(v)}" placeholder="在这里填「${esc(v)}」…">`}
+    </div>`;
+  }).join("");
+
+  // 输入即刷新预览
+  form.querySelectorAll("[data-var]").forEach(el=>{
+    el.addEventListener("input",()=>{
+      varCtx.values[el.dataset.var]=el.value;
+      updateVarPreview();
+    });
+  });
+
+  updateVarPreview();
+  document.getElementById("varOverlay").style.display="flex";
+  const first=form.querySelector("[data-var]");
+  if(first) setTimeout(()=>first.focus(),60);
+}
+
+function updateVarPreview(){
+  if(!varCtx) return;
+  const el=document.getElementById("varPreview");
+  if(!el) return;
+  el.textContent=tplFill(varCtx.ctx.text, varCtx.values);
+}
+
+function closeVarFill(){
+  document.getElementById("varOverlay").style.display="none";
+  varCtx=null;
+}
+
+function varResetAll(){
+  if(!varCtx) return;
+  varCtx.vars.forEach(v=>{varCtx.values[v]="";});
+  document.querySelectorAll("#varForm [data-var]").forEach(el=>{el.value="";});
+  updateVarPreview();
+}
+
+function varDoCopy(){
+  if(!varCtx) return;
+  const txt=tplFill(varCtx.ctx.text, varCtx.values);
+  // 检查还有没有没填的，提醒但不阻止（用户可能就想留占位符）
+  const rest=tplVars(txt);
+  copyText(txt);
+  if(rest.length) toast("已复制，还有 "+rest.length+" 处没填");
+  closeVarFill();
+}
+
+/* ---------------- ② 版本历史 ---------------- */
+
+const VER_LIMIT=20;          // 每条提示词最多保留 20 个历史版本
+const VER_MAX_CHARS=200000;  // 单版本内容上限，防止媒体/超长文本把 localStorage 撑爆
+
+// 给一条提示词拍快照。只在「内容真的变了」时才存，避免无意义的重复版本
+function snapVersion(it, reason){
+  if(!it) return;
+  const payload={
+    title:it.title||"",
+    category:it.category||"",
+    tags:(it.tags||[]).slice(),
+    content:it.content||"",
+    desc:it.desc||"",
+    steps:JSON.parse(JSON.stringify(it.steps||[]))
+  };
+  const fingerprint=JSON.stringify(payload);
+  if(fingerprint.length>VER_MAX_CHARS) return;   // 太大就不存，宁可少一个版本也不拖垮存储
+
+  if(!Array.isArray(it.versions)) it.versions=[];
+  // 与上一个快照完全一致就不重复存
+  if(it.versions.length){
+    const last=it.versions[it.versions.length-1];
+    if(last && last.fp===fingerprint) return;
+  }
+  it.versions.push(Object.assign({at:Date.now(), reason:reason||"手动保存", fp:fingerprint}, payload));
+  // 超出上限丢最早的
+  while(it.versions.length>VER_LIMIT) it.versions.shift();
+}
+
+let verItemId=null;
+let verPickedIdx=-1;
+
+function openVersionHistory(id){
+  const it=find(id||state.selectedId);
+  if(!it){toast("请先选中一条提示词");return;}
+  verItemId=it.id;
+  verPickedIdx=-1;
+  renderVersionList();
+  document.getElementById("verPreviewWrap").style.display="none";
+  document.getElementById("verOverlay").style.display="flex";
+}
+
+function renderVersionList(){
+  const it=find(verItemId);
+  const box=document.getElementById("verList");
+  const hint=document.getElementById("verHint");
+  if(!it){box.innerHTML="";return;}
+  const vs=Array.isArray(it.versions)?it.versions:[];
+  if(!vs.length){
+    box.innerHTML='<div class="hint-block" style="margin:0">这条提示词还没有历史版本。下次编辑保存时会自动留下第一份快照。</div>';
+    hint.textContent="";
+    return;
+  }
+  hint.textContent="共 "+vs.length+" 个历史版本（最多保留 "+VER_LIMIT+" 个），点某一条可预览，确认后回滚。";
+  // 倒序：最新的排最上面
+  box.innerHTML=vs.map((v,i)=>i).reverse().map(i=>{
+    const v=vs[i];
+    const d=new Date(v.at||0);
+    const pad=n=>String(n).padStart(2,"0");
+    const when=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const nStep=(v.steps||[]).length;
+    const size=(v.content||"").length;
+    const meta=(v.title||"(无标题)")+" · "+(nStep?"分步 "+nStep+" 步":size+" 字");
+    return `<div class="ver-item" data-vi="${i}">
+      <span class="ver-when">${when}</span>
+      <span class="ver-meta">${esc(meta)} · ${esc(v.reason||"")}</span>
+      <button class="btn" data-rollback="${i}">回滚到此</button>
+    </div>`;
+  }).join("");
+}
+
+function pickVersion(idx){
+  const it=find(verItemId);
+  if(!it) return;
+  const vs=it.versions||[];
+  const v=vs[idx];
+  if(!v) return;
+  verPickedIdx=idx;
+  document.querySelectorAll("#verList .ver-item").forEach(el=>{
+    el.classList.toggle("active", String(el.dataset.vi)===String(idx));
+  });
+  const wrap=document.getElementById("verPreviewWrap");
+  const box=document.getElementById("verPreview");
+  wrap.style.display="block";
+  const parts=[];
+  parts.push("【标题】"+(v.title||""));
+  if(v.category) parts.push("【分类】"+v.category);
+  if((v.tags||[]).length) parts.push("【标签】"+v.tags.join("、"));
+  if(v.desc) parts.push("【说明】"+v.desc);
+  const steps=(v.steps||[]);
+  if(steps.length){
+    steps.forEach((st,i)=>{parts.push("【第"+(i+1)+"步 · "+(st.title||"")+"】\n"+(st.content||""));});
+  }else{
+    parts.push("【内容】\n"+(v.content||""));
+  }
+  box.textContent=parts.join("\n\n");
+}
+
+function rollbackVersion(idx){
+  const it=find(verItemId);
+  if(!it) return;
+  const v=(it.versions||[])[idx];
+  if(!v){toast("版本不存在");return;}
+  if(!confirm("确定把这条提示词回滚到该版本？当前内容会先自动存成一个新快照，随时可以再回滚回来。")) return;
+  // 先给当前状态拍一张，保证「回滚」本身也是可逆的
+  snapVersion(it,"回滚前的自动快照");
+  it.title=v.title||it.title;
+  it.category=v.category||it.category;
+  it.tags=(v.tags||[]).slice();
+  it.content=v.content||"";
+  it.desc=v.desc||"";
+  it.steps=JSON.parse(JSON.stringify(v.steps||[]));
+  save();
+  renderAll();
+  closeVersionHistory();
+  toast("已回滚到该版本");
+}
+
+function closeVersionHistory(){
+  document.getElementById("verOverlay").style.display="none";
+  verItemId=null;
+  verPickedIdx=-1;
+}
+
+/* ---------------- ③ PNG 生成参数提取 ---------------- */
+
+// PNG 文件尾部结构：…[IDAT…][tEXt/iTXt：length(4) type(4) data(length) crc(4)]…IEND
+// 参数一般存在 tEXt（A1111/NovelAI）或 iTXt 里，key 通常是 parameters / Comment / Description
+// 这里不用第三方库，直接按 PNG 规范逐块扫，安全且不依赖网络
+function readPngParams(buf){
+  const u8=buf instanceof Uint8Array?buf:new Uint8Array(buf);
+  // PNG 魔数校验：89 50 4E 47 0D 0A 1A 0A
+  if(!(u8[0]===0x89&&u8[1]===0x50&&u8[2]===0x4e&&u8[3]===0x47)) return {error:"这不是 PNG 文件"};
+  const dv=new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let p=8;
+  const chunks={};
+  const dec=new TextDecoder("utf-8");
+  let guard=0;
+  while(p+8<=u8.length && guard++<10000){
+    const len=dv.getUint32(p);
+    if(len>u8.length) break;                      // 长度异常，防止越界
+    const type=String.fromCharCode(u8[p+4],u8[p+5],u8[p+6],u8[p+7]);
+    const dataStart=p+8;
+    const dataEnd=dataStart+len;
+    if(dataEnd>u8.length) break;
+    if(type==="tEXt"){
+      // key\0value
+      const seg=u8.subarray(dataStart,dataEnd);
+      let z=-1;
+      for(let i=0;i<seg.length;i++){if(seg[i]===0){z=i;break;}}
+      if(z>0){
+        const key=dec.decode(seg.subarray(0,z));
+        const val=dec.decode(seg.subarray(z+1));
+        chunks[key]=val;
+      }
+    }else if(type==="iTXt"){
+      // keyword\0 压缩标志(1) 压缩方法(1) 语言\0 翻译\0 文本
+      const seg=u8.subarray(dataStart,dataEnd);
+      let z=-1;
+      for(let i=0;i<seg.length;i++){if(seg[i]===0){z=i;break;}}
+      if(z>0){
+        const key=dec.decode(seg.subarray(0,z));
+        let q=z+1;
+        const compressed=seg[q]; q+=2;
+        // 语言标签
+        while(q<seg.length&&seg[q]!==0)q++; q++;
+        // 翻译后的关键字
+        while(q<seg.length&&seg[q]!==0)q++; q++;
+        if(!compressed && q<seg.length) chunks[key]=dec.decode(seg.subarray(q));
+        // 压缩过的（少见）就不解了，留空
+      }
+    }else if(type==="IEND"){
+      break;
+    }
+    p=dataEnd+4;   // 跳过 CRC
+  }
+  return chunks;
+}
+
+// 把 A1111 / ComfyUI / NovelAI 的参数字符串解析成结构化字段
+// A1111 格式长这样：
+//   一行或多行正面提示词
+//   Negative prompt: 负面提示词（可能多行）
+//   Steps: 30, Sampler: DPM++ 2M Karras, CFG scale: 7, Seed: 123, Size: 512x768, Model: xxx
+function parseGenParams(text){
+  const raw=String(text||"");
+  if(!raw.trim()) return null;
+
+  // ComfyUI 存的是 JSON
+  if(/^\s*\{[\s\S]*\}\s*$/.test(raw)){
+    try{
+      const j=JSON.parse(raw);
+      const out={来源:"ComfyUI（JSON）"};
+      // 常见键名直接取
+      const pick=["prompt","positive","text","negative","negative_prompt","seed","steps","model","sampler","cfg","width","height"];
+      const flat={};
+      (function walk(o,depth){
+        if(!o||typeof o!=="object"||depth>6) return;
+        for(const k in o){
+          const v=o[k];
+          if(v&&typeof v==="object") walk(v,depth+1);
+          else if(typeof v==="string"||typeof v==="number"){
+            const lk=String(k).toLowerCase();
+            if(pick.includes(lk) && flat[lk]===undefined) flat[lk]=v;
+          }
+        }
+      })(j,0);
+      out.正面提示词=flat.prompt||flat.positive||flat.text||"";
+      out.负面提示词=flat.negative||flat["negative_prompt"]||flat.negative_prompt||"";
+      if(flat.seed!==undefined) out.种子=String(flat.seed);
+      if(flat.steps!==undefined) out.步数=String(flat.steps);
+      if(flat.model) out.模型=String(flat.model);
+      if(flat.sampler) out.采样器=String(flat.sampler);
+      if(flat.cfg!==undefined) out.CFG=String(flat.cfg);
+      if(flat.width&&flat.height) out.尺寸=flat.width+"x"+flat.height;
+      return out;
+    }catch(e){}
+  }
+
+  // NovelAI：参数段通常以 "Steps:" 开头，提示词之间用 "Negative prompt:" 分隔
+  const out={来源:"Stable Diffusion / NovelAI（文本）"};
+  let body=raw.trim();
+  let neg="";
+  const ni=body.indexOf("Negative prompt:");
+  if(ni>=0){
+    neg=body.slice(ni+"Negative prompt:".length);
+    body=body.slice(0,ni);
+    // 负面提示词到「Steps:」这一行结束
+    const si=neg.search(/\n?\s*Steps:\s*/i);
+    if(si>=0){ out.__params=neg.slice(si); neg=neg.slice(0,si); }
+  }
+  out.正面提示词=body.trim();
+  out.负面提示词=neg.trim();
+
+  // 解析 "Steps: 30, Sampler: x, CFG scale: 7, Seed: 12, Size: 512x768, Model: y"
+  const paramStr=out.__params!==undefined?out.__params:raw;
+  delete out.__params;
+  const kv={};
+  const re=/([A-Za-z][A-Za-z0-9 _\-\.]{1,28}):\s*("(?:[^"]*)"|[^,]+)/g;
+  let m;
+  while((m=re.exec(paramStr))){
+    let v=m[2].trim();
+    if(v.startsWith('"')&&v.endsWith('"')) v=v.slice(1,-1);
+    kv[m[1].trim()]=v;
+  }
+  const map={
+    "Steps":"步数","Sampler":"采样器","CFG scale":"CFG","Seed":"种子","Size":"尺寸",
+    "Model":"模型","Model hash":"模型哈希","Denoising strength":"重绘幅度",
+    "Clip skip":"Clip skip","Version":"版本"
+  };
+  for(const k in map){
+    if(kv[k]!==undefined) out[map[k]]=kv[k];
+  }
+  // 模型名常带路径，取文件名部分更清爽
+  if(out.模型) out.模型=out.模型.split(/[\\\/]/).pop();
+  return out;
+}
+
+let pngParsed=null;
+
+function openPngImport(){
+  pngParsed=null;
+  document.getElementById("pngResult").style.display="none";
+  document.getElementById("pngApply").disabled=true;
+  document.getElementById("pngOverlay").style.display="flex";
+}
+
+function closePngImport(){
+  document.getElementById("pngOverlay").style.display="none";
+  pngParsed=null;
+}
+
+// 读一组文件，取第一张能解析出参数的
+async function handlePngFiles(files){
+  const list=Array.from(files||[]).filter(f=>/\.png$/i.test(f.name)||f.type==="image/png");
+  const box=document.getElementById("pngResult");
+  const apply=document.getElementById("pngApply");
+  box.style.display="block";
+  if(!list.length){
+    box.innerHTML='<div class="png-warn">没检测到 PNG 文件。这个功能只支持 PNG —— JPG / WEBP 不保存生成参数。</div>';
+    apply.disabled=true;
+    return;
+  }
+  box.innerHTML='<div class="hint-block" style="margin:0">正在读取 '+list.length+' 张图…</div>';
+
+  for(const f of list){
+    let buf;
+    try{ buf=await f.arrayBuffer(); }catch(e){ continue; }
+    const chunks=readPngParams(buf);
+    if(chunks.error) continue;
+
+    // 依次找可能的参数键
+    const keys=Object.keys(chunks);
+    let payload=null, usedKey="";
+    for(const k of ["parameters","Parameters","Comment","comment","Description","description","prompt"]){
+      if(chunks[k]){ payload=chunks[k]; usedKey=k; break; }
+    }
+    // NovelAI 的 Software / Source 键也带信息
+    if(!payload){
+      const guess=keys.find(k=>/param|prompt|comment|desc/i.test(k));
+      if(guess){ payload=chunks[guess]; usedKey=guess; }
+    }
+    if(!payload){
+      box.innerHTML='<div class="png-warn">这张 PNG 里没有生成参数（'+esc(f.name)+'）。<br>'+
+        '可能原因：图片被微信/QQ 等工具压缩过、是从网页另存的、或生成工具没写入参数。</div>';
+      apply.disabled=true;
+      continue;
+    }
+
+    const parsed=parseGenParams(payload);
+    if(!parsed){
+      box.innerHTML='<div class="png-warn">找到了参数块但没能解析出内容（'+esc(f.name)+'）。</div>';
+      apply.disabled=true;
+      continue;
+    }
+    parsed.文件名=f.name;
+    parsed.参数键=usedKey;
+    pngParsed=parsed;
+    apply.disabled=false;
+
+    const rows=[["文件",f.name],["来源",parsed.来源],["正面提示词",parsed.正面提示词||"（空）"]];
+    if(parsed.负面提示词) rows.push(["负面提示词",parsed.负面提示词]);
+    ["模型","采样器","步数","CFG","种子","尺寸","重绘幅度","版本"].forEach(k=>{
+      if(parsed[k]) rows.push([k,parsed[k]]);
+    });
+    box.innerHTML='<dl class="png-kv">'+rows.map(r=>
+      `<dt>${esc(r[0])}</dt><dd>${esc(String(r[1]).slice(0,1200))}</dd>`).join("")+'</dl>';
+    return;
+  }
+}
+
+// 把解析结果填进「新建提示词」表单
+function applyPngParams(){
+  if(!pngParsed){toast("还没有可用的参数");return;}
+  // 关键：必须先把解析结果拷到局部变量。
+  // closePngImport() 会把 pngParsed 置成 null，若之后再读 pngParsed.xxx 就是空指针
+  // （2026-10-27 实测踩到：点「填入」弹窗关了，但表单一个字都没填，控制台报
+  //   Cannot read properties of null (reading '正面提示词')）。
+  const P=pngParsed;
+  closePngImport();
+  openEdit(null);   // 新建
+  const t=document.getElementById("fTitle");
+  if(!t) return;
+  const base=(P.正面提示词||"").trim().split("\n")[0].slice(0,24).replace(/[,，.]$/,"");
+  t.value=base?base:"从图片提取的提示词";
+  // 内容：正面提示词 + 负面提示词（分两段写，用户自己决定要不要合并）
+  let content=P.正面提示词||"";
+  if(P.负面提示词){
+    content+=(content?"\n\n":"")+"Negative prompt: "+P.负面提示词;
+  }
+  const cEl=document.getElementById("fContent");
+  if(cEl) cEl.value=content;
+  // 说明里记录来源参数，方便以后回查是哪张图出来的效果
+  const meta=[];
+  ["模型","采样器","步数","CFG","种子","尺寸"].forEach(k=>{
+    if(P[k]) meta.push(k+" "+P[k]);
+  });
+  const dEl=document.getElementById("fDesc");
+  if(dEl) dEl.value=("来自图片「"+(P.文件名||"")+"」"+(meta.length?"｜"+meta.join("｜"):""));
+  toast("已填入表单，检查一下再保存");
+}
+
+/* ---------------- ④ 悬浮窗桥接 ---------------- */
+
+// 把当前数据精简后推给悬浮窗（只传必要字段，避免几百 MB 媒体数据阻塞 IPC）
+function pushToQuick(mini){
+  try{
+    if(!mini||!mini.window) return;
+    const payload={
+      items:state.items.map(it=>({
+        id:it.id, title:it.title, category:it.category,
+        tags:it.tags||[], favorite:!!it.favorite,
+        content:it.content||"",
+        steps:(it.steps||[]).map(s=>({title:s.title||"",content:s.content||""}))
+      })),
+      categories:state.categories
+    };
+    mini.window.postMessage({type:"pv-data", data:payload});
+  }catch(e){}
+}
+
+// 收到悬浮窗的指令
+function onQuickMessage(msg){
+  if(!msg||!msg.type) return;
+  if(msg.type==="pv-request-quick"){
+    openQuickWindow();
+  }else if(msg.type==="pv-copied"){
+    toast("已复制：「"+(msg.title||"").slice(0,20)+"」");
+  }else if(msg.type==="pv-copy-text"){
+    // 悬浮窗让主窗口代为复制（主窗口剪贴板权限更稳）
+    if(msg.text) copyText(msg.text);
+  }
+}
+
+function openQuickWindow(){
+  try{
+    const gui=require("nw.gui");
+    gui.Window.open("quicksave.html",{
+      width:520, height:520, position:"center",
+      frame:false, resizable:true, always_on_top:true,
+      focus:true, show_in_taskbar:false, show:true
+    });
+  }catch(e){
+    toast("当前不是桌面版，无法打开悬浮窗");
+  }
+}
+
+/* ---------------- 统一初始化 ---------------- */
+
+(function initEnhance(){
+  const $=id=>document.getElementById(id);
+
+  // 变量填空
+  const vc=$("varCancel"); if(vc) vc.addEventListener("click",closeVarFill);
+  const vr=$("varReset");  if(vr) vr.addEventListener("click",varResetAll);
+  const vy=$("varCopy");   if(vy) vy.addEventListener("click",varDoCopy);
+  const vo=$("varOverlay"); if(vo) vo.addEventListener("click",e=>{if(e.target===vo)closeVarFill();});
+
+  // 版本历史
+  const vclose=$("verClose"); if(vclose) vclose.addEventListener("click",closeVersionHistory);
+  const vov=$("verOverlay");  if(vov) vov.addEventListener("click",e=>{if(e.target===vov)closeVersionHistory();});
+  const vlist=$("verList");
+  if(vlist) vlist.addEventListener("click",e=>{
+    const rb=e.target.closest("[data-rollback]");
+    if(rb){ e.stopPropagation(); rollbackVersion(parseInt(rb.dataset.rollback,10)); return; }
+    const item=e.target.closest("[data-vi]");
+    if(item) pickVersion(parseInt(item.dataset.vi,10));
+  });
+
+  // PNG 提取
+  const pc=$("pngClose"); if(pc) pc.addEventListener("click",closePngImport);
+  const pov=$("pngOverlay"); if(pov) pov.addEventListener("click",e=>{if(e.target===pov)closePngImport();});
+  const pa=$("pngApply"); if(pa) pa.addEventListener("click",applyPngParams);
+  const pp=$("pngPick");
+  const pf=$("pngFile");
+  if(pp&&pf){
+    pp.addEventListener("click",()=>pf.click());
+    pf.addEventListener("change",()=>{handlePngFiles(pf.files); pf.value="";});
+  }
+  const pd=$("pngDrop");
+  if(pd){
+    pd.addEventListener("click",e=>{ if(e.target.closest("button")) return; if(pf) pf.click(); });
+    ["dragenter","dragover"].forEach(t=>pd.addEventListener(t,e=>{
+      e.preventDefault(); pd.classList.add("dragover");
+    }));
+    ["dragleave","drop"].forEach(t=>pd.addEventListener(t,e=>{
+      e.preventDefault(); pd.classList.remove("dragover");
+    }));
+    pd.addEventListener("drop",e=>{
+      if(e.dataTransfer&&e.dataTransfer.files) handlePngFiles(e.dataTransfer.files);
+    });
+  }
+
+  // 把「复制内容 / 去使用」改成：有变量就弹填空，没变量照旧直接复制
+  const doCopySmart=()=>{
+    const ctx=currentDetailCtx();
+    if(!ctx||!String(ctx.text||"").trim()){toast("没有可复制的内容");return;}
+    if(tplVars(ctx.text).length) openVarFill();
+    else copyText(ctx.text);
+  };
+  const dc=$("dCopy"); if(dc){
+    dc.removeAttribute("onclick");
+    dc.addEventListener("click",e=>{e.preventDefault();doCopySmart();});
+  }
+  const du=$("dUse");
+  if(du){
+    du.removeAttribute("onclick");
+    du.addEventListener("click",e=>{e.preventDefault();doCopySmart();});
+  }
+
+  /* ---- 与悬浮窗通信 + 全局热键（NW.js 专属，非桌面版静默跳过） ---- */
+  let nwWin=null, hotkeyObj=null, quickWin=null;
+
+  // 让悬浮窗拿到最新数据：主窗口主动向它 postMessage
+  function broadcastToQuick(){
+    if(!quickWin||quickWin.closed) return;
+    try{ pushToQuick(quickWin); }catch(e){}
+  }
+
+  // 打开 / 唤起悬浮窗（已经开着就只聚焦，不重复开）
+  function spawnQuick(){
+    if(quickWin&&!quickWin.closed){
+      try{ quickWin.show(); quickWin.focus(); }catch(e){}
+      broadcastToQuick();
+      return;
+    }
+    let gui;
+    try{ gui=require("nw.gui"); }catch(e){ toast("当前不是桌面版，无法打开悬浮窗"); return; }
+    gui.Window.open("quicksave.html",{
+      width:520, height:540,
+      min_width:360, min_height:360,
+      frame:false, resizable:true, always_on_top:true,
+      focus:true, show_in_taskbar:false, show:true, position:"center"
+    }, w=>{
+      quickWin=w;
+      // 窗口里的 DOM 就绪后再推数据，否则对方还没挂 message 监听
+      w.on("loaded",()=>{
+        setTimeout(broadcastToQuick,300);
+        setTimeout(broadcastToQuick,1200);   // 兜底再推一次（首帧可能丢）
+      });
+      w.on("closed",()=>{ quickWin=null; });
+    });
+  }
+  window.openQuickWindow=spawnQuick;
+
+  // 接收悬浮窗发来的消息
+  function onMsg(ev){
+    const m=ev&&ev.data;
+    if(!m||!m.type) return;
+    if(m.type==="pv-request-data"){
+      broadcastToQuick();
+    }else if(m.type==="pv-copied"){
+      toast("已复制：「"+String(m.title||"").slice(0,20)+"」");
+    }else if(m.type==="pv-copy-text"){
+      if(m.text) copyText(m.text);
+    }
+  }
+  window.addEventListener("message",onMsg);
+
+  try{
+    if(window.nw&&nw.Window){
+      nwWin=nw.Window.get();
+
+      // 注册全局热键 Ctrl+Shift+P：任何时候（哪怕应用在后台）都能唤出悬浮窗
+      if(nwWin&&typeof nwWin.registerGlobalHotKey==="function"){
+        try{
+          hotkeyObj=new nw.Shortcut({key:"Ctrl+Shift+P",active:()=>spawnQuick()});
+          nwWin.registerGlobalHotKey(hotkeyObj);
+        }catch(e){
+          console.warn("[热键] 注册失败（可能被其它程序占用）：",e&&e.message);
+        }
+      }
+
+      // 关窗时主动注销热键，避免残留占用
+      nwWin.on("close",()=>{
+        try{ if(hotkeyObj) nwWin.unregisterGlobalHotKey(hotkeyObj); }catch(e){}
+        try{ if(quickWin&&!quickWin.closed) quickWin.close(); }catch(e){}
+        nwWin.close(true);
+      });
+
+      // 每次数据结构变化后顺便同步一次（保存/删除/编辑都会走 renderAll）
+      const origRenderAll=window.renderAll;
+      if(typeof origRenderAll==="function"){
+        window.renderAll=function(){
+          const r=origRenderAll.apply(this,arguments);
+          try{ broadcastToQuick(); }catch(e){}
+          return r;
+        };
+      }
+    }
+  }catch(e){}
+
+  // 暴露给悬浮窗与其它模块调用
+  window.PV={openVarFill,openQuickWindow:spawnQuick,pushToQuick,tplVars,tplFill,onQuickMessage,
+             openVersionHistory,openPngImport,snapVersion};
+})();
 </script>
 <script>
 /* ============================================================
@@ -4992,6 +7528,201 @@ init();
   }
   listen(PORT_START);
 })();
+
+// ==================== MISTY 移植三件套（2026-11-05） ====================
+// 回收站 / 标签管理 / 批量导入 + 存储体检
+// 设计原则：全部走既有 save()/renderAll()/toast() 链路，数据仍在同一份 IndexedDB 存档里
+function fmtMB(n){return n>=1048576?(n/1048576).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';}
+
+// ---------- 回收站 ----------
+function openTrash(){renderTrash();document.getElementById("trashOverlay").classList.add("show");}
+function closeTrash(){document.getElementById("trashOverlay").classList.remove("show");}
+function renderTrash(){
+  const box=document.getElementById("trashList");const t=state.trash||[];
+  document.getElementById("trashCount").textContent=t.length?("共 "+t.length+" 条"):"（空）";
+  document.getElementById("trashEmpty").style.display=t.length?"":"none";
+  if(!t.length){box.innerHTML='<div style="color:var(--txt-3);padding:18px 0;text-align:center">回收站是空的</div>';return;}
+  box.innerHTML=t.map((e,idx)=>{
+    const d=new Date(e.deletedAt), pad=n=>String(n).padStart(2,"0");
+    const when=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes());
+    const size=fmtMB(JSON.stringify(e.item).length);
+    return '<div class="trash-row" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px">'
+      +'<div style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.item.title||"（无标题）")+'</div>'
+      +'<div style="font-size:12px;color:var(--txt-3)">'+when+' · '+size+'</div></div>'
+      +'<button class="btn" data-trash-restore="'+idx+'">恢复</button>'
+      +'<button class="btn danger" data-trash-purge="'+idx+'">彻底删除</button></div>';
+  }).join("");
+}
+function restoreTrash(idx){
+  const e=(state.trash||[])[idx];if(!e)return;
+  state.items.push(e.item);state.trash.splice(idx,1);
+  save();renderTrash();renderAll();toast("已恢复：「"+(e.item.title||"无标题")+"」");
+}
+function purgeTrash(idx){
+  const e=(state.trash||[])[idx];if(!e)return;
+  if(!confirm("彻底删除「"+(e.item.title||"无标题")+"」？此操作不可恢复。"))return;
+  state.trash.splice(idx,1);save();renderTrash();toast("已彻底删除");
+}
+function emptyTrash(){
+  const t=state.trash||[];if(!t.length)return;
+  if(!confirm("清空回收站（共 "+t.length+" 条）？此操作不可恢复。"))return;
+  state.trash=[];save();renderTrash();toast("回收站已清空");
+}
+
+// ---------- 标签管理 ----------
+function tagStats(){
+  const map=new Map();
+  state.items.forEach(it=>(it.tags||[]).forEach(t=>map.set(t,(map.get(t)||0)+1)));
+  return [...map.entries()].sort((a,b)=>b[1]-a[1]);
+}
+function openTagMgr(){renderTagMgr();document.getElementById("tagOverlay").classList.add("show");}
+function closeTagMgr(){document.getElementById("tagOverlay").classList.remove("show");}
+function renderTagMgr(){
+  const box=document.getElementById("tagMgrList");const st=tagStats();
+  document.getElementById("tagCount").textContent=st.length?("共 "+st.length+" 个"):"（还没有标签）";
+  if(!st.length){box.innerHTML='<div style="color:var(--txt-3);padding:18px 0;text-align:center">还没有任何标签</div>';return;}
+  box.innerHTML=st.map(e=>{
+    const [name,n]=e;
+    return '<div class="tagmgr-row" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px">'
+      +'<div style="flex:1;min-width:0"><span style="font-weight:600">'+esc(name)+'</span>'
+      +'<span style="font-size:12px;color:var(--txt-3);margin-left:8px">'+n+' 条提示词</span></div>'
+      +'<button class="btn" data-tag-rename="'+esc(name)+'">重命名</button>'
+      +'<button class="btn danger" data-tag-del="'+esc(name)+'">删除</button></div>';
+  }).join("");
+}
+function renameTag(oldName){
+  const nu=prompt("把标签「"+oldName+"」改名为：",oldName);
+  if(nu===null)return;
+  const name=nu.trim();
+  if(!name){toast("标签名不能为空");return;}
+  if(name===oldName)return;
+  let n=0;
+  state.items.forEach(it=>{
+    if(!(it.tags||[]).includes(oldName))return;
+    it.tags=it.tags.filter(t=>t!==oldName);
+    if(!it.tags.includes(name))it.tags.push(name);  // 目标名已存在时自动合并
+    n++;
+  });
+  save();renderTagMgr();renderAll();toast("已把 "+n+" 条提示词的标签改名为「"+name+"」");
+}
+function deleteTag(name){
+  if(!confirm("删除标签「"+name+"」？只删标签，不动提示词本体。"))return;
+  let n=0;
+  state.items.forEach(it=>{
+    if(!(it.tags||[]).includes(name))return;
+    it.tags=it.tags.filter(t=>t!==name);n++;
+  });
+  save();renderTagMgr();renderAll();toast("已从 "+n+" 条提示词上移除标签「"+name+"」");
+}
+
+// ---------- 批量导入文件夹 ----------
+function bindBatchImport(){
+  const btn=document.getElementById("btnBatchImport"),inp=document.getElementById("batchDirInput");
+  if(!btn||!inp)return;
+  btn.addEventListener("click",()=>inp.click());
+  inp.addEventListener("change",e=>{
+    const files=[...e.target.files||[]].filter(f=>f.type&&(f.type.startsWith("image/")||f.type.startsWith("video/")));
+    e.target.value="";
+    if(!files.length){toast("文件夹里没有图片或视频");return;}
+    if(!confirm("将在「未分类」批量新建 "+files.length+" 张提示词卡片（标题=文件名），继续？"))return;
+    let done=0;
+    files.forEach(file=>{
+      const r=new FileReader();
+      r.onload=()=>{
+        const base=(file.name||"media").replace(/\.[^.]+$/,"");
+        const it=seed({title:base,category:"",tags:[],content:"",desc:"",steps:[]});
+        it.media=[{type:file.type,name:file.name,dataURL:r.result}];
+        state.items.push(it);done++;
+        if(done===files.length){save();renderAll();toast("批量导入完成：新建 "+done+" 张卡片（在「未分类」里）");}
+      };
+      r.readAsDataURL(file);
+    });
+  });
+}
+
+// ---------- 存储体检 ----------
+function openHealth(){renderHealth();document.getElementById("healthOverlay").classList.add("show");}
+function closeHealth(){document.getElementById("healthOverlay").classList.remove("show");}
+function renderHealth(){
+  const box=document.getElementById("healthBody");
+  const items=state.items||[];
+  const sizes=items.map(it=>({id:it.id,title:it.title||"（无标题）",n:JSON.stringify(it).length}));
+  const total=sizes.reduce((a,b)=>a+b.n,0)+(state.trash||[]).reduce((a,e)=>a+JSON.stringify(e).length,0);
+  const mediaCnt=items.reduce((a,it)=>a+((it.media||[]).length),0);
+  // 重复媒体：同一 dataURL 出现在多张卡里
+  const seen=new Map();
+  items.forEach(it=>(it.media||[]).forEach(m=>{
+    const k=(m.dataURL||"").slice(0,256)+"|"+(m.dataURL||"").length;
+    if(!seen.has(k))seen.set(k,{len:(m.dataURL||"").length,cnt:0,names:[]});
+    const e=seen.get(k);e.cnt++;if(e.names.length<3)e.names.push(it.title);
+  }));
+  const dups=[...seen.values()].filter(e=>e.cnt>1);
+  const waste=dups.reduce((a,e)=>a+e.len*(e.cnt-1),0);
+  let cacheKB=0;try{cacheKB=(localStorage.getItem("pvCache")||"").length;}catch(e){}
+  const top=sizes.slice().sort((a,b)=>b.n-a.n).slice(0,5);
+  box.innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+    +'<div class="field"><label>数据总量</label><div style="font-size:18px;font-weight:700">'+fmtMB(total)+'</div></div>'
+    +'<div class="field"><label>提示词 / 媒体</label><div style="font-size:18px;font-weight:700">'+items.length+' 张 / '+mediaCnt+' 个</div></div>'
+    +'</div>'
+    +'<div class="field"><label>占空间最大的 5 张卡片</label>'
+    +(top.length?top.map(t=>'<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line)"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">'+esc(t.title)+'</span><b>'+fmtMB(t.n)+'</b></div>').join(''):'<div style="color:var(--txt-3)">暂无</div>')
+    +'</div>'
+    +'<div class="field"><label>重复媒体（同一张图/视频存了多份）</label>'
+    +(dups.length?'<div style="font-size:13px;margin-bottom:8px">'+dups.length+' 组重复，浪费 '+fmtMB(waste)+'</div><button class="btn" id="healthDedupe">一键去重（每组只保留最早一张卡里的）</button>':'<div style="color:var(--txt-3)">没有重复，很干净 ✓</div>')
+    +'</div>'
+    +'<div class="field"><label>localStorage 缓存备份（pvCache，仅兜底用，可安全清除）</label>'
+    +'<div style="font-size:13px;margin-bottom:8px">'+fmtMB(cacheKB)+(cacheKB>1048576?' —— 偏大，建议清除':'')+'</div>'
+    +(cacheKB>0?'<button class="btn" id="healthCache">清除缓存备份</button>':'<div style="color:var(--txt-3)">无</div>')
+    +'</div>';
+  const dd=document.getElementById("healthDedupe");
+  if(dd)dd.addEventListener("click",()=>{
+    // 去重：后面卡片里和前面重复的同一 media 直接删掉
+    const seen2=new Set();let rm=0;
+    items.forEach(it=>{
+      const keep=[];
+      (it.media||[]).forEach(m=>{
+        const k=(m.dataURL||"").slice(0,256)+"|"+(m.dataURL||"").length;
+        if(seen2.has(k)){rm++;return;}
+        seen2.add(k);keep.push(m);
+      });
+      it.media=keep;
+    });
+    save();renderAll();renderHealth();toast("已移除 "+rm+" 个重复媒体");
+  });
+  const cc=document.getElementById("healthCache");
+  if(cc)cc.addEventListener("click",()=>{
+    try{localStorage.removeItem("pvCache");}catch(e){}
+    renderHealth();toast("缓存备份已清除（正式数据在 IndexedDB，不受影响）");
+  });
+}
+
+// ---------- 绑定 ----------
+(function bindMistyFeatures(){
+  const $=id=>document.getElementById(id);
+  $("sTrash")&&$("sTrash").addEventListener("click",openTrash);
+  $("trashClose")&&$("trashClose").addEventListener("click",closeTrash);
+  $("trashEmpty")&&$("trashEmpty").addEventListener("click",emptyTrash);
+  $("trashList")&&$("trashList").addEventListener("click",e=>{
+    const r=e.target.closest("[data-trash-restore]");if(r){restoreTrash(+r.dataset.trashRestore);return;}
+    const p2=e.target.closest("[data-trash-purge]");if(p2)purgeTrash(+p2.dataset.trashPurge);
+  });
+  $("sTagMgr")&&$("sTagMgr").addEventListener("click",openTagMgr);
+  $("tagMgrClose")&&$("tagMgrClose").addEventListener("click",closeTagMgr);
+  $("tagMgrList")&&$("tagMgrList").addEventListener("click",e=>{
+    const rn=e.target.closest("[data-tag-rename]");if(rn){renameTag(rn.dataset.tagRename);return;}
+    const dl=e.target.closest("[data-tag-del]");if(dl)deleteTag(dl.dataset.tagDel);
+  });
+  $("sHealth")&&$("sHealth").addEventListener("click",openHealth);
+  $("healthClose")&&$("healthClose").addEventListener("click",closeHealth);
+  // 点遮罩关闭
+  ["trashOverlay","tagOverlay","healthOverlay"].forEach(id=>{
+    const ov=$(id);if(!ov)return;
+    ov.addEventListener("click",e=>{if(e.target===ov)ov.classList.remove("show");});
+  });
+  bindBatchImport();
+})();
+
 </script>
 
 </body>
